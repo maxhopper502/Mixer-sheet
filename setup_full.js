@@ -1,1 +1,0 @@
-Placeholder for JS logic for setup form and localStorage
