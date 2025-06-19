@@ -1,4 +1,6 @@
 alert("✅ job.js is loaded!");
+console.log("Job:", job);
+console.log("Products:", products);
 let loadCount = 0;
 const job = JSON.parse(localStorage.getItem("mixerJob") || "{}");
 let products = [];
