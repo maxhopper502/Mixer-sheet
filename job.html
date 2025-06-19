@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Demo Job</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="header" id="job-header">Loading...</div>
+
+  <div class="products" id="products"></div>
+
+  <button onclick="addLoad()">➕ Add Load</button>
+  <button onclick="resetData()">🔄 Reset</button>
+
+  <script>
+    localStorage.setItem("mixerJob", JSON.stringify({
+      client: "Demo Client",
+      crop: "Wheat",
+      hectares: 100,
+      loads: 10,
+      volPerHa: 80,
+      pilot: "Test Pilot",
+      aircraft: "VH-XYZ"
+    }));
+
+    localStorage.setItem("mixerProducts", JSON.stringify([
+      {
+        name: "Glyphosate",
+        rate: 0.75,
+        unit: "L",
+        containers: [20, 20, 20]
+      }
+    ]));
+  </script>
+  <script src="job.js"></script>
+</body>
+</html>
