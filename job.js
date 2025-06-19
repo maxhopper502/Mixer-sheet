@@ -27,11 +27,14 @@ function addLoad() {
   const container = document.getElementById("products");
   const load = document.createElement("div");
   load.className = "load";
+  load.dataset.completed = "false";
 
   let html = `<h3>Load #${loadCount}</h3>`;
   html += `<p><strong>Date:</strong> ${getCurrentDate()} &nbsp; <strong>Time:</strong> ${getCurrentTime()}</p>`;
 
-  products.forEach(product => {
+  const productChecks = [];
+
+  products.forEach((product, index) => {
     const required = product.rate * haPerLoad;
     let fromContainers = [];
     let remaining = required;
@@ -50,15 +53,37 @@ function addLoad() {
       }
     }
 
+    const btnId = `load${loadCount}-product${index}`;
     html += `<p><strong>${product.name}</strong><br>
              Rate: ${product.rate.toFixed(2)} L/ha &nbsp; Per Load: ${required.toFixed(2)} L<br>
              ${fromContainers.join("<br>")}
-             <br><button onclick="this.textContent='✔️ Added'; this.disabled=true;">✅ Add</button></p>`;
+             <br><button id="${btnId}" onclick="markProductAdded('${btnId}', this)">✅ Add</button></p>`;
+    productChecks.push(btnId);
   });
 
-  load.innerHTML = html;
+  html += `<div id="load-complete-${loadCount}" style="display:none;"><strong>✅ Loaded at ${getCurrentTime()}</strong></div>`;
+  load.dataset.checks = JSON.stringify(productChecks);
   container.appendChild(load);
   localStorage.setItem("mixerProducts", JSON.stringify(products));
+}
+
+function markProductAdded(id, btn) {
+  btn.textContent = "✔️ Added";
+  btn.disabled = true;
+
+  const parentLoad = btn.closest(".load");
+  const checks = JSON.parse(parentLoad.dataset.checks);
+  const allDone = checks.every(cid => {
+    const el = document.getElementById(cid);
+    return el && el.disabled;
+  });
+
+  if (allDone && parentLoad.dataset.completed !== "true") {
+    const completeBox = parentLoad.querySelector(`[id^='load-complete-']`);
+    completeBox.style.display = "block";
+    completeBox.innerHTML = `✅ Loaded at ${getCurrentTime()}`;
+    parentLoad.dataset.completed = "true";
+  }
 }
 
 function resetData() {
