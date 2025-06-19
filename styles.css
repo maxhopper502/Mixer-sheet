@@ -36,4 +36,10 @@ input, select {
   padding: 8px;
   margin: 4px;
   width: 160px;
+}.
+job-inputs,
+.product-inputs {
+  margin-top: 120px;
+  padding: 10px;
 }
+
