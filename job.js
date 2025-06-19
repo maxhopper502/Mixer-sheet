@@ -1,4 +1,4 @@
-alert("✅ job.js script loaded!");
+alert("✅ job.js is loaded!");
 let loadCount = 0;
 const job = JSON.parse(localStorage.getItem("mixerJob") || "{}");
 let products = [];
