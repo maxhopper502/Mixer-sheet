@@ -1,1 +1,0 @@
-// Job script with validation logic
