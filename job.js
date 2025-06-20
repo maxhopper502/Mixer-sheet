@@ -14,12 +14,13 @@ function getCurrentDate() {
 function showHeader() {
   const el = document.getElementById("job-header");
   const totalVolume = (job.hectares * job.volPerHa).toFixed(1);
-  el.innerHTML = `
-    <p><strong>Client:</strong> ${job.client}</p>
-    <p><strong>Crop:</strong> ${job.crop} | <strong>Ha:</strong> ${job.hectares} | <strong>Water/Ha:</strong> ${job.volPerHa} L</p>
-    <p><strong>Total Volume:</strong> ${totalVolume} L | <strong>Loads:</strong> ${job.loads}</p>
-    <p><strong>Pilot:</strong> ${job.pilot} | <strong>Aircraft:</strong> ${job.aircraft}</p>
-  `;
+el.insertAdjacentHTML("beforeend", `
+  <p><strong>Client:</strong> ${job.client}</p>
+  <p><strong>Crop:</strong> ${job.crop} | <strong>Ha:</strong> ${job.hectares} | <strong>Water/Ha:</strong> ${job.volPerHa} L</p>
+  <p><strong>Total Volume:</strong> ${(job.hectares * job.volPerHa).toFixed(1)} L | <strong>Loads:</strong> ${job.loads}</p>
+  <p><strong>Pilot:</strong> ${job.pilot} | <strong>Aircraft:</strong> ${job.aircraft}</p>
+`);
+
 }
 
 function addLoad() {
