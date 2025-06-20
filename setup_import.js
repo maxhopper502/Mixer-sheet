@@ -1,6 +1,7 @@
 const jobForm = document.getElementById("job-form");
 const productForm = document.getElementById("product-form");
 const productList = document.getElementById("product-list");
+const importFile = document.getElementById("importFile");
 
 let products = [];
 
@@ -72,4 +73,35 @@ function startJob() {
   localStorage.setItem("mixerJob", JSON.stringify(jobDetails));
   localStorage.setItem("mixerProducts", JSON.stringify(products));
   window.location.href = "job.html";
+}
+
+if (importFile) {
+  importFile.addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      try {
+        const data = JSON.parse(event.target.result);
+        if (data.job && data.products) {
+          const f = jobForm.elements;
+          f.client.value = data.job.client || "";
+          f.crop.value = data.job.crop || "";
+          f.hectares.value = data.job.hectares || 0;
+          f.loads.value = data.job.loads || 0;
+          f.volPerHa.value = data.job.volPerHa || 0;
+          f.pilot.value = data.job.pilot || "";
+          f.aircraft.value = data.job.aircraft || "";
+          products = data.products;
+          updateList();
+        } else {
+          alert("Invalid JSON format. Must include job and products.");
+        }
+      } catch (err) {
+        alert("Failed to read file: " + err.message);
+      }
+    };
+    reader.readAsText(file);
+  });
 }
