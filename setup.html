@@ -10,7 +10,11 @@
   <div class="header"><h2>🧪 Mixer Setup</h2></div>
 
   <!-- ✅ Import JSON File -->
-  <input type="file" id="importFile" accept=".json" style="margin:10px;" />
+  <label style="margin:10px; display:block;">
+  📥 Import Job (.json):
+  <input type="file" id="importFile" accept=".json" />
+</label>
+
 
   <form id="job-form" class="job-inputs">
     <input type="text" name="client" placeholder="Client" required />
