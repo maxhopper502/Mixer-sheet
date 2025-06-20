@@ -23,3 +23,9 @@ button {
   margin: 4px 4px 8px 0;
   cursor: pointer;
 }
+.buttons {
+  margin-top: 160px;
+  padding: 20px;
+  background: #f0f0f0; /* light gray so you can see the region */
+  border-top: 1px solid #ccc;
+}
