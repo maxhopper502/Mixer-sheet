@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mixer Job</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="header" id="job-header">
+    <button onclick="window.location.href='dashboard.html'">⬅️ Back to Dashboard</button>
+  </div>
+  <div class="products" id="products"></div>
+
+  <!-- ✅ Buttons that were missing -->
+  <button id="add-load-button" onclick="addLoad()">➕ Add Load</button>
+  <button onclick="resetData()">🔄 Reset</button>
+
+  <script>
+    function getRegFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("reg");
+    }
+
+    const aircraftReg = getRegFromURL();
+    const savedJobs = JSON.parse(localStorage.getItem("mixerJobs") || "{}");
+    const activeJob = savedJobs[aircraftReg];
+
+    if (!activeJob) {
+      alert("No job found for this aircraft.");
+      window.location.href = "dashboard.html";
+    }
+
+    localStorage.setItem("mixerJob", JSON.stringify(activeJob.job));
+    localStorage.setItem("mixerProducts", JSON.stringify(activeJob.products));
+  </script>
+  <script src="job.js"></script>
+</body>
+</html>
