@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mixer Setup</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="header"><h2>🧪 Mixer Setup</h2></div>
+
+  <label style="margin:10px; display:block; margin-top:160px;">
+    📥 Import Job (<strong>.json</strong> or <strong>.csv</strong>):
+    <input type="file" id="importFile" accept=".json,.csv" />
+  </label>
+
+  <form id="job-form" class="job-inputs">
+    <input type="text" name="client" placeholder="Client" required />
+    <input type="text" name="crop" placeholder="Crop Type" required />
+    <input type="number" name="hectares" placeholder="Total Ha" required />
+    <input type="number" name="loads" placeholder="Number of Loads" required />
+    <input type="number" name="volPerHa" placeholder="Water Vol/Ha" required />
+    <input type="text" name="pilot" placeholder="Pilot" required />
+    <input type="text" name="aircraft" placeholder="Aircraft (e.g. ODV)" maxlength="3" required />
+  </form>
+
+  <form id="product-form" class="product-inputs">
+    <input type="text" name="name" placeholder="Product Name" required />
+    <input type="number" step="0.001" name="rate" placeholder="Rate" required />
+    <select name="unit">
+      <option value="L">L</option>
+      <option value="kg">kg</option>
+    </select>
+    <input type="number" name="container" placeholder="Container Size" required />
+    <input type="number" name="count" placeholder="# Containers" required />
+    <button type="submit">Add Product</button>
+  </form>
+
+  <div id="product-list" class="product-inputs"></div>
+  <button onclick="startJob()">➡️ Start Mixing</button>
+
+  <script src="setup_import.js"></script>
+  <script>
+    let products = [];
+
+    document.getElementById("product-form").onsubmit = e => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const name = formData.get("name");
+      const rate = parseFloat(formData.get("rate"));
+      const unit = formData.get("unit");
+      const container = parseFloat(formData.get("container"));
+      const count = parseInt(formData.get("count"));
+      if (!name || !rate || !container || !count) return;
+      products.push({
+        name,
+        rate,
+        unit,
+        containers: Array(count).fill(container)
+      });
+      localStorage.setItem("mixerProducts", JSON.stringify(products));
+      e.target.reset();
+      updateList();
+    };
+
+    function updateList() {
+      const hectares = parseFloat(new FormData(document.getElementById("job-form")).get("hectares") || 0);
+      const list = document.getElementById("product-list");
+      list.innerHTML = products.map((p, i) => {
+        const required = (p.rate * hectares).toFixed(3);
+        const available = p.containers.reduce((a, b) => a + b, 0).toFixed(3);
+        const shortfall = (available - required).toFixed(3);
+        const ok = shortfall >= 0;
+        return `<p><strong>${p.name}</strong> (${p.rate.toFixed(3)} ${p.unit}/ha)<br>
+          ${p.containers.length} × ${p.containers[0]} = ${available} ${p.unit}<br>
+          Required: ${required} ${p.unit}<br>
+          ${ok ? `<span style='color:green;'>✅ Ok</span>` : `<span style='color:red;'>⚠️ Short ${Math.abs(shortfall)} ${p.unit}</span>`}
+        </p>`;
+      }).join("");
+    }
+
+    function startJob() {
+      const jobData = new FormData(document.getElementById("job-form"));
+      const aircraft = jobData.get("aircraft")?.trim().toUpperCase();
+
+      if (!aircraft) {
+        alert("✈️ Aircraft ID is missing!");
+        return;
+      }
+
+      const jobDetails = {
+        client: jobData.get("client"),
+        crop: jobData.get("crop"),
+        hectares: parseFloat(jobData.get("hectares")),
+        loads: parseInt(jobData.get("loads")),
+        volPerHa: parseFloat(jobData.get("volPerHa")),
+        pilot: jobData.get("pilot"),
+        aircraft: aircraft
+      };
+
+      localStorage.setItem("mixerProducts", JSON.stringify(products));
+
+      const allJobs = JSON.parse(localStorage.getItem("mixerJobs") || "{}");
+      allJobs[aircraft] = { job: jobDetails, products: products };
+      localStorage.setItem("mixerJobs", JSON.stringify(allJobs));
+      localStorage.setItem("mixerJob", JSON.stringify(jobDetails));
+
+      alert("✅ Saved job for: " + aircraft + "\nRedirecting to job.html?reg=" + aircraft);
+      window.location.href = "job.html?reg=" + encodeURIComponent(aircraft);
+    }
+  </script>
+</body>
+</html>
