@@ -1,0 +1,25 @@
+
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+}
+.header {
+  position: fixed;
+  top: 0;
+  background: #fff;
+  padding: 10px;
+  width: 100%;
+  z-index: 10;
+  border-bottom: 1px solid #ccc;
+  min-height: 140px;
+}
+.products {
+  margin-top: 160px;
+  padding: 10px;
+}
+button {
+  padding: 8px 12px;
+  margin: 4px 4px 8px 0;
+  cursor: pointer;
+}
