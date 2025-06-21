@@ -1,0 +1,32 @@
+{
+  "job": {
+    "client": "FarmCo",
+    "crop": "Wheat",
+    "hectares": 120,
+    "loads": 6,
+    "volPerHa": 80,
+    "pilot": "Max",
+    "aircraft": "ODV"
+  },
+  "products": [
+    {
+      "name": "Herbicide A",
+      "rate": 1.5,
+      "unit": "L",
+      "containers": [
+        20,
+        20,
+        10
+      ]
+    },
+    {
+      "name": "Fertiliser B",
+      "rate": 2.0,
+      "unit": "kg",
+      "containers": [
+        25,
+        25
+      ]
+    }
+  ]
+}
