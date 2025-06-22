@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Mixer Setup</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="setup">
+  <div class="header">Mixer Setup</div>
+
+  <div style="padding: 20px; margin-top: 80px;">
+    <input type="file" id="importFile" accept=".json,.csv"><br><br>
+    <button onclick="importJob()">Import Job</button>
+
+    <hr>
+
+    <input type="text" placeholder="Client" id="client" required><br>
+    <input type="text" placeholder="Crop Type" id="crop" required><br>
+    <input type="number" placeholder="Total Hectares for Job" id="hectares" required><br>
+    <input type="number" placeholder="Number of Loads" id="loads" required><br>
+    <input type="number" placeholder="Water Volume per Hectare (L)" id="waterRate" required><br>
+    <input type="text" placeholder="Pilot" id="pilot" required><br>
+    <input type="text" placeholder="Aircraft (3 letters)" id="aircraft" maxlength="3" required><br>
+
+    <h3>Products</h3>
+    <div id="productList"></div>
+    <button type="button" onclick="addProduct()">+ Add Product</button><br><br>
+
+    <button onclick="saveJob()">Start Mixing</button>
+  </div>
+
+  <script>
+    function addProduct() {
+      const div = document.createElement("div");
+      div.className = "product-block";
+      div.innerHTML = \`
+        <input type="text" placeholder="Product Name" class="productName" required>
+        <input type="number" step="0.001" placeholder="Rate per Ha" class="productRate" required>
+        <input type="number" placeholder="Container Size" class="productContainerSize" required>
+        <input type="number" placeholder="Number of Containers" class="productContainerCount" required>
+        <select class="productUnit">
+          <option value="L">L</option>
+          <option value="kg">kg</option>
+        </select><br><br>
+      \`;
+      document.getElementById("productList").appendChild(div);
+    }
+
+    // Add 2 products on page load
+    window.onload = function () {
+      addProduct();
+      addProduct();
+    };
+
+    function importJob() {
+      const fileInput = document.getElementById("importFile");
+      const file = fileInput.files[0];
+      if (!file) return alert("Please select a file.");
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const content = e.target.result;
+
+        try {
+          const job = JSON.parse(content);
+          localStorage.setItem("jobData", JSON.stringify(job));
+          alert("Job imported successfully!");
+        } catch (err) {
+          alert("Import failed: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function saveJob() {
+      const products = [];
+      const names = document.querySelectorAll(".productName");
+      const rates = document.querySelectorAll(".productRate");
+      const sizes = document.querySelectorAll(".productContainerSize");
+      const counts = document.querySelectorAll(".productContainerCount");
+      const units = document.querySelectorAll(".productUnit");
+
+      const hectares = parseFloat(document.getElementById("hectares").value || 0);
+      const loadCount = parseInt(document.getElementById("loads").value || 0);
+      const waterRate = parseFloat(document.getElementById("waterRate").value || 0);
+
+      for (let i = 0; i < names.length; i++) {
+        const rate = parseFloat(rates[i].value || 0);
+        const size = parseFloat(sizes[i].value || 0);
+        const count = parseInt(counts[i].value || 0);
+        const totalAvailable = size * count;
+        const totalRequired = rate * hectares;
+        const leftover = totalAvailable - totalRequired;
+
+        const product = {
+          name: names[i].value,
+          rate,
+          unit: units[i].value,
+          containerSize: size,
+          containerCount: count,
+          totalAvailable,
+          totalRequired,
+          leftover
+        };
+
+        if (leftover < 0) {
+          alert(\`Warning: Not enough \${product.name} (short by \${(-leftover).toFixed(2)} \${product.unit})\`);
+        }
+
+        products.push(product);
+      }
+
+      const job = {
+        client: document.getElementById("client").value,
+        crop: document.getElementById("crop").value,
+        hectares,
+        loads: loadCount,
+        waterRate,
+        pilot: document.getElementById("pilot").value,
+        aircraft: document.getElementById("aircraft").value.toUpperCase(),
+        products
+      };
+
+      localStorage.setItem("jobData", JSON.stringify(job));
+      window.location.href = "job.html";
+    }
+  </script>
+</body>
+</html>
