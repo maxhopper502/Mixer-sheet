@@ -74,7 +74,7 @@
         const available = p.containers.reduce((a,b)=>a+b,0).toFixed(3);
         const ok = available >= required;
         return `<p><strong>${p.name}</strong> ${p.rate.toFixed(3)} ${p.unit}/ha<br>
-        Total: ${available} ${p.unit}, Required: ${required} ${p.unit}<br>
+        Required: ${available} ${p.unit}, Total: ${required} ${p.unit}<br>
         ${ok ? "✅ OK" : "⚠️ Not enough!"}</p>`;
       }).join("");
     }
