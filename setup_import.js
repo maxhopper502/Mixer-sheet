@@ -23,7 +23,7 @@ document.getElementById("importFile").addEventListener("change", function(evt) {
 
       // Populate product list UI
       products = data.products;
-      updateProductList();
+      updateList();
       alert("✅ Job imported successfully!");
     } catch (err) {
       alert("❌ Failed to import job: " + err);
