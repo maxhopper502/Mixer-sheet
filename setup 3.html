@@ -1,0 +1,35 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Mixer Setup</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="setup">
+  <div class="header">Mixer Setup</div>
+
+  <div style="padding: 20px; margin-top: 80px;">
+    <input type="file" id="importFile" accept=".json,.csv"><br><br>
+    <button onclick="importJob()">Import Job</button>
+
+    <hr>
+
+    <input type="text" placeholder="Client" id="client" required><br>
+    <input type="text" placeholder="Crop Type" id="crop" required><br>
+    <input type="number" placeholder="Total Hectares for Job" id="hectares" required><br>
+    <input type="number" placeholder="Number of Loads" id="loads" required><br>
+    <input type="number" placeholder="Water Volume per Hectare (L)" id="waterRate" required><br>
+    <input type="text" placeholder="Pilot" id="pilot" required><br>
+    <input type="text" placeholder="Aircraft (3 letters)" id="aircraft" maxlength="3" required><br>
+
+    <h3>Products</h3>
+    <div id="productList"></div>
+    <button type="button" onclick="addProduct()">+ Add Product</button><br><br>
+
+    <button onclick="saveJob()">Start Mixing</button>
+  </div>
+
+  <script src="setup.js"></script>
+</body>
+</html>
