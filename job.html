@@ -1,0 +1,29 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Mixer Job</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="job">
+  <div class="header">
+    <span><strong>Client:</strong> Test Client</span>
+    <span><strong>Crop:</strong> Wheat</span>
+    <span><strong>Total Hectares:</strong> 100 ha</span>
+    <span><strong>Water Rate:</strong> 80 L/ha</span>
+    <span><strong>Total Volume:</strong> 8000 L</span>
+    <span><strong>Pilot:</strong> John Doe</span>
+    <span><strong>Aircraft:</strong> ODV</span>
+  </div>
+
+  <div id="products"></div>
+
+  <div id="buttons-container">
+    <button id="add-load-button" onclick="addLoad()">➕ Load</button>
+    <button onclick="resetData()">Reset</button>
+  </div>
+
+  <script src="job.js"></script>
+</body>
+</html>
