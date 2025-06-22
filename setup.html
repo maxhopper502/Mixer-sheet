@@ -1,0 +1,38 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Mixer Setup</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="setup">
+  <div class="header">Mixer Setup</div>
+
+  <div style="padding: 20px;">
+    <h2>Manual Job Entry</h2>
+    <form id="setupForm">
+      <input type="text" placeholder="Client" id="client" required><br>
+      <input type="text" placeholder="Crop Type" id="crop" required><br>
+      <input type="number" placeholder="Total Hectares" id="hectares" required><br>
+      <input type="number" placeholder="Load Size (Ha)" id="loadSize" required><br>
+      <input type="text" placeholder="Pilot" id="pilot" required><br>
+      <input type="text" placeholder="Aircraft (3 letters)" id="aircraft" maxlength="3" required><br>
+
+      <h3>Products</h3>
+      <div id="productList"></div>
+      <button type="button" onclick="addProduct()">+ Add Product</button><br><br>
+
+      <button type="submit">Save Job</button>
+    </form>
+
+    <hr>
+
+    <h2>Import Job File</h2>
+    <input type="file" id="importFile" accept=".json,.csv"><br><br>
+    <button onclick="importJob()">Import Job</button>
+  </div>
+
+  <script src="setup.js"></script>
+</body>
+</html>
