@@ -1,0 +1,61 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mixer Job</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 12px 20px;
+      color: white;
+      background: #004080;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 160px;
+      z-index: 999;
+      font-size: 1.3rem;
+      align-items: center;
+    }
+    .header span {
+      min-width: 45%;
+      margin: 2px 0;
+    }
+    #products {
+      margin-top: 180px;
+      padding: 10px;
+    }
+    #buttons-container {
+      padding: 20px;
+      margin-bottom: 200px;
+    }
+  </style>
+</head>
+<body class="job">
+  <div class="header" id="job-header">
+    <span><strong>Client:</strong> <span id="client"></span></span>
+    <span><strong>Crop:</strong> <span id="crop"></span></span>
+    <span><strong>Total Ha:</strong> <span id="hectares"></span></span>
+    <span><strong>Water/Ha:</strong> <span id="volPerHa"></span></span>
+    <span><strong>Total Volume:</strong> <span id="totalVolume"></span></span>
+    <span><strong>Pilot:</strong> <span id="pilot"></span></span>
+    <span><strong>Aircraft:</strong> <span id="aircraft"></span></span>
+  </div>
+
+  <div id="products"></div>
+
+  <div id="buttons-container">
+    <button onclick="addLoad()">➕ Load</button>
+    <button onclick="resetData()">Reset</button>
+  </div>
+
+  <script src="job.js"></script>
+</body>
+</html>
