@@ -1,0 +1,90 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mixer Job</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .header {
+      background: #004080;
+      color: white;
+      padding: 10px 16px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 999;
+      font-size: 1.2rem;
+    }
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: nowrap;
+      margin-bottom: 6px;
+    }
+    .header-row span {
+      flex: 1;
+      min-width: 120px;
+      white-space: nowrap;
+    }
+    #products {
+      margin-top: 220px;
+      padding: 10px;
+    }
+    #buttons-container {
+      padding: 20px;
+      margin-bottom: 200px;
+    }
+
+    @media (max-width: 600px) {
+      .header {
+        font-size: 1.05rem;
+        padding: 6px 12px;
+      }
+      .header-row {
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 4px;
+      }
+      .header-row span {
+        flex: unset;
+        min-width: unset;
+      }
+      #products {
+        margin-top: 270px;
+      }
+    }
+  </style>
+</head>
+<body class="job">
+  <div class="header" id="job-header">
+    <div class="header-row">
+      <span><strong>Client:</strong> <span id="client"></span></span>
+      <span><strong>Crop:</strong> <span id="crop"></span></span>
+      <span><strong>Pilot:</strong> <span id="pilot"></span></span>
+      <span><strong>Aircraft:</strong> <span id="aircraft"></span></span>
+    </div>
+    <div class="header-row">
+      <span><strong>Total Area Req:</strong> <span id="hectares"></span> ha</span>
+      <span><strong>Vol per Ha:</strong> <span id="volPerHa"></span> L</span>
+      <span><strong>Total Volume:</strong> <span id="totalVolume"></span> L</span>
+    </div>
+    <div class="header-row">
+      <span><strong>Load Area:</strong> <span id="loadArea"></span> ha</span>
+      <span><strong>Load Volume:</strong> <span id="loadVolume"></span> L</span>
+      <span><strong>No. of Loads:</strong> <span id="loads"></span></span>
+    </div>
+  </div>
+
+  <div id="products"></div>
+
+  <div id="buttons-container">
+    <button onclick="addLoad()">➕ Load</button>
+    <button onclick="resetData()">Reset</button>
+  </div>
+
+  <script src="job.js"></script>
+</body>
+</html>
