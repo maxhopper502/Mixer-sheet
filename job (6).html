@@ -1,0 +1,84 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mixer Job</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .header {
+      background: #004080;
+      color: white;
+      padding: 10px 12px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 999;
+      font-size: 1.2rem;
+    }
+    .header-row {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+    .header-row span {
+      flex: 1;
+      white-space: nowrap;
+    }
+    #products {
+      margin-top: 150px;
+      padding: 10px;
+    }
+    #buttons-container {
+      padding: 20px;
+      margin-bottom: 200px;
+    }
+
+    @media (max-width: 600px) {
+      .header {
+        font-size: 1.05rem;
+        padding: 8px 10px;
+      }
+      .header-row {
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 6px;
+      }
+      .header-row span {
+        flex: unset;
+      }
+      #products {
+        margin-top: 240px;
+      }
+    }
+  </style>
+</head>
+<body class="job">
+  <div class="header" id="job-header">
+    <div class="header-row">
+      <span><strong>Client:</strong> <span id="client"></span></span>
+      <span><strong>Crop:</strong> <span id="crop"></span></span>
+      <span><strong>Total Ha:</strong> <span id="hectares"></span></span>
+    </div>
+    <div class="header-row">
+      <span><strong>Water/Ha:</strong> <span id="volPerHa"></span></span>
+      <span><strong>Total Volume:</strong> <span id="totalVolume"></span></span>
+      <span><strong>Pilot:</strong> <span id="pilot"></span></span>
+      <span><strong>Aircraft:</strong> <span id="aircraft"></span></span>
+    </div>
+  </div>
+
+  <div id="products"></div>
+
+  <div id="buttons-container">
+    <button onclick="addLoad()">➕ Load</button>
+    <button onclick="resetData()">Reset</button>
+  </div>
+
+  <script src="job.js"></script>
+</body>
+</html>
