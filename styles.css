@@ -101,3 +101,15 @@ input, select {
     text-align: left;
   }
 }
+@media screen and (max-width: 600px) {
+  body.job .job-details {
+    padding: 8px 12px;
+  }
+
+  body.job .job-details div {
+    flex: 1 1 100%;
+    width: 100%;
+    text-align: left;
+    margin-bottom: 4px;
+  }
+}
