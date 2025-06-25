@@ -100,7 +100,7 @@ input, select {
     flex: 1 1 100%;
     text-align: left;
   }
-}
+  
 @media screen and (max-width: 600px) {
   body.job .job-details {
     display: flex;
