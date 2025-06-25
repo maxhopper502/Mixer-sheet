@@ -94,12 +94,6 @@ input, select {
 .product-tile button {
   margin-right: 10px;
 }
-
-@media screen and (max-width: 600px) {
-  body.job .job-details div {
-    flex: 1 1 100%;
-    text-align: left;
-  }
   
 @media screen and (max-width: 600px) {
   body.job .job-details {
