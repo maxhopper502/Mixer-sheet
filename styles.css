@@ -103,13 +103,17 @@ input, select {
 }
 @media screen and (max-width: 600px) {
   body.job .job-details {
-    padding: 8px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    padding: 8px 10px;
   }
 
   body.job .job-details div {
-    flex: 1 1 100%;
-    width: 100%;
+    flex: 1 1 48%;
+    width: 48%;
+    margin: 4px 1%;
     text-align: left;
-    margin-bottom: 4px;
+    font-size: 0.95rem;
   }
 }
+
