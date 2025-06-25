@@ -96,19 +96,28 @@ input, select {
 }
   
 @media screen and (max-width: 600px) {
-  body.job .job-details {
+  .header-row {
     display: flex;
     flex-wrap: wrap;
-    padding: 8px 10px;
+    gap: 6px;
+    justify-content: space-between;
   }
 
-  body.job .job-details div {
+  .header-row span {
     flex: 1 1 48%;
-    width: 48%;
-    margin: 4px 1%;
-    text-align: left;
+    min-width: 48%;
     font-size: 0.95rem;
   }
+
+  .header {
+    font-size: 1.05rem;
+    padding: 8px 12px;
+  }
+
+  #products {
+    margin-top: 240px;
+  }
 }
+
 
 
