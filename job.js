@@ -1,4 +1,3 @@
-
 let job = {};
 let products = [];
 let loads = [];
@@ -31,7 +30,6 @@ function loadJob() {
 
   renderLoads();
 }
-
 function renderLoads() {
   const container = document.getElementById("products");
   container.innerHTML = "";
@@ -40,6 +38,7 @@ function renderLoads() {
     const div = document.createElement("div");
     div.className = "load-block";
     div.innerHTML = `<h3>Load ${i + 1}</h3>`;
+
     load.products.forEach(p => {
       const btn = document.createElement("button");
       btn.textContent = p.added ? `✅ ${p.name} (${p.volume} ${p.unit})` : `➕ Add ${p.name} (${p.volume} ${p.unit})`;
@@ -83,7 +82,6 @@ function renderLoads() {
   renderStockStatus();
   addJobManagementButtons();
 }
-
 function addLoad() {
   if (loads.length >= job.loads) {
     alert("🚫 All planned loads have already been added.");
@@ -141,18 +139,6 @@ function renderStockStatus() {
   document.body.appendChild(stockDiv);
 }
 
-function resetData() {
-  if (confirm("Reset all job progress?")) {
-    localStorage.removeItem("mixerJob");
-    localStorage.removeItem("mixerProducts");
-    location.reload();
-  }
-}
-
-window.onload = loadJob;
-
-
-
 function addJobManagementButtons() {
   const existing = document.getElementById("job-buttons");
   if (existing) existing.remove();
@@ -164,7 +150,7 @@ function addJobManagementButtons() {
   const editBtn = document.createElement("button");
   editBtn.textContent = "✏️ Edit Job";
   editBtn.onclick = () => {
-    location.href = "setup.html"; // Goes back to setup with data still in localStorage
+    location.href = "setup.html";
   };
 
   const clearBtn = document.createElement("button");
@@ -181,3 +167,5 @@ function addJobManagementButtons() {
   div.appendChild(clearBtn);
   document.body.appendChild(div);
 }
+
+window.onload = loadJob;
