@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mixer Setup</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body.setup .header {
+      height: 50px;
+      padding: 10px 15px;
+      font-size: 1.3rem;
+    }
+  </style>
+</head>
+<body class="setup">
+  <div class="header"><h2>🧪 Mixer Setup</h2></div>
+
+  <label style="margin:10px; display:block; margin-top:60px;">
+    📥 Import Job (.json):
+    <input type="file" id="importFile" accept=".json" />
+  </label>
+
+  <form id="job-form" class="job-inputs">
+    <input type="text" name="client" placeholder="Client" required />
+    <input type="text" name="crop" placeholder="Crop Type" required />
+    <input type="number" name="hectares" placeholder="Total Ha" required />
+    <input type="number" name="loads" placeholder="Number of Loads" required />
+    <input type="number" name="volPerHa" placeholder="Water Vol/Ha" required />
+    <input type="text" name="pilot" placeholder="Pilot" required />
+    <input type="text" name="aircraft" placeholder="Aircraft (e.g. ODV)" maxlength="3" required />
+  </form>
+
+  <form id="product-form" class="product-inputs">
+    <input type="text" name="name" placeholder="Product Name" required />
+    <input type="number" step="0.001" name="rate" placeholder="Rate" required />
+    <select name="unit">
+      <option value="L">L</option>
+      <option value="kg">kg</option>
+    </select>
+    <input type="number" name="container" placeholder="Container Size" required />
+    <input type="number" name="count" placeholder="# Containers" required />
+    <button type="submit">Add Product</button>
+  </form>
+
+  <div id="product-list" class="product-inputs"></div>
+  <button onclick="startJob()">➡️ Start Mixing</button>
+
+  <script>
+    let products = [];
+
+    document.getElementById("importFile").addEventListener("change", function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const data = JSON.parse(event.target.result);
+          const jobFields = ['client', 'crop', 'hectares', 'loads', 'volPerHa', 'pilot', 'aircraft'];
+          jobFields.forEach(name => {
+            const field = document.querySelector(`[name="${name}"]`);
+            if (field) field.value = data[name] || '';
+          });
+          products = data.products || [];
+          localStorage.setItem("mixerProducts", JSON.stringify(products));
+          localStorage.setItem("mixerJob", JSON.stringify(data));
+          updateList();
+        } catch (err) {
+          alert("❌ Failed to import: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById("product-form").onsubmit = e => {
+      e.preventDefault();
+      const data = new FormData(e.target);
+      products.push({
+        name: data.get("name"),
+        rate: parseFloat(data.get("rate")),
+        unit: data.get("unit"),
+        containers: Array(parseInt(data.get("count"))).fill(parseFloat(data.get("container")))
+      });
+      localStorage.setItem("mixerProducts", JSON.stringify(products));
+      e.target.reset();
+      updateList();
+    };
+
+    function updateList() {
+      const ha = parseFloat(new FormData(document.getElementById("job-form")).get("hectares") || 0);
+      const list = document.getElementById("product-list");
+      list.innerHTML = products.map((p, index) => {
+        const required = (p.rate * ha).toFixed(3);
+        const available = p.containers.reduce((a,b)=>a+b,0).toFixed(3);
+        const diff = (available - required).toFixed(3);
+        const ok = available >= required;
+        return `<div class="product-tile">
+          <p><strong>${p.name}</strong> — ${p.rate.toFixed(3)} ${p.unit}/ha</p>
+          <p>Required: ${required} ${p.unit}</p>
+          <p>Supplied: ${available} ${p.unit}</p>
+          <p>Difference: ${diff} ${p.unit} ${ok ? "✅" : "⚠️ Not enough!"}</p>
+          <button onclick="editProduct(${index})">✏️ Edit</button>
+          <button onclick="deleteProduct(${index})">🗑️ Delete</button>
+        </div>`;
+      }).join("");
+    }
+
+    function editProduct(index) {
+      const p = products[index];
+      const name = prompt("Product Name:", p.name);
+      const rate = parseFloat(prompt("Rate per ha:", p.rate));
+      const unit = prompt("Unit (L or kg):", p.unit);
+      const size = parseFloat(prompt("Container size:", p.containers[0]));
+      const count = parseInt(prompt("# Containers:", p.containers.length));
+      if (name && !isNaN(rate) && unit && !isNaN(size) && !isNaN(count)) {
+        products[index] = {
+          name,
+          rate,
+          unit,
+          containers: Array(count).fill(size)
+        };
+        localStorage.setItem("mixerProducts", JSON.stringify(products));
+        updateList();
+      }
+    }
+
+    function deleteProduct(index) {
+      if (confirm("Delete this product?")) {
+        products.splice(index, 1);
+        localStorage.setItem("mixerProducts", JSON.stringify(products));
+        updateList();
+      }
+    }
+
+    function startJob() {
+      const f = new FormData(document.getElementById("job-form"));
+      const job = {
+        client: f.get("client"),
+        crop: f.get("crop"),
+        hectares: parseFloat(f.get("hectares")),
+        loads: parseInt(f.get("loads")),
+        volPerHa: parseFloat(f.get("volPerHa")),
+        pilot: f.get("pilot"),
+        aircraft: f.get("aircraft").trim().toUpperCase()
+      };
+      localStorage.setItem("mixerJob", JSON.stringify(job));
+      localStorage.setItem("mixerProducts", JSON.stringify(products));
+      window.location.href = "job.html";
+    }
+
+    window.onload = () => {
+      try {
+        products = JSON.parse(localStorage.getItem("mixerProducts")) || [];
+      } catch {
+        products = [];
+      }
+      updateList();
+    };
+  </script>
+</body>
+</html>
