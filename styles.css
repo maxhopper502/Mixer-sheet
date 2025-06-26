@@ -1,6 +1,0 @@
-body { font-family: sans-serif; margin: 0; padding: 0; }
-.header { background: #007BBD; color: white; padding: 10px 20px; }
-body.setup .header { height: 50px; font-size: 1.3rem; }
-input, select { padding: 8px; margin: 4px; font-size: 1rem; width: calc(100% - 20px); }
-button { padding: 10px 16px; background: #007BBD; color: white; border: none; margin: 5px; cursor: pointer; }
-.product-inputs { margin: 10px; }
