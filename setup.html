@@ -72,6 +72,16 @@
     };
 
     function updateList() {
+      const job = JSON.parse(localStorage.getItem("mixerJob") || '{}');
+if (job && Object.keys(job).length > 0) {
+  ['client', 'crop', 'hectares', 'loads', 'volPerHa', 'pilot', 'aircraft'].forEach(name => {
+    const field = document.querySelector(`[name="${name}"]`);
+    if (field && job[name] !== undefined) {
+      field.value = job[name];
+    }
+  });
+}
+
       const ha = parseFloat(new FormData(document.getElementById("job-form")).get("hectares") || 0);
       const list = document.getElementById("product-list");
       list.innerHTML = products.map((p, index) => {
