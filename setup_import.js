@@ -1,3 +1,27 @@
+// ✅ JSON IMPORT
+document.getElementById('importFile').addEventListener('change', function (e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (event) {
+    try {
+      const data = JSON.parse(event.target.result);
+      const jobFields = ['client', 'crop', 'hectares', 'loads', 'volPerHa', 'pilot', 'aircraft'];
+      jobFields.forEach(name => {
+        document.querySelector(`[name="${name}"]`).value = data[name] || '';
+      });
+
+      products = data.products || [];
+      localStorage.setItem("mixerProducts", JSON.stringify(products));
+      updateList();
+    } catch (err) {
+      alert("❌ Failed to import JSON: " + err.message);
+    }
+  };
+
+  reader.readAsText(file);
+});
 
 document.getElementById('importCsv').addEventListener('change', function (e) {
   const file = e.target.files[0];
