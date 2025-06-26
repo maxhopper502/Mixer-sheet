@@ -1,0 +1,45 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mixer Setup</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="setup">
+  <div class="header"><h2>🧪 Mixer Setup</h2></div>
+
+  <label style="margin:10px; display:block; margin-top:120px;">
+    📥 Import Job:
+    <input type="file" id="importFile" accept=".json,.csv" />
+  </label>
+
+  <form id="job-form" class="job-inputs">
+    <input type="text" name="client" placeholder="Client" required />
+    <input type="text" name="crop" placeholder="Crop Type" required />
+    <input type="number" name="hectares" placeholder="Total Ha" required />
+    <input type="number" name="loads" placeholder="Number of Loads" required />
+    <input type="number" name="volPerHa" placeholder="Water Vol/Ha" required />
+    <input type="text" name="pilot" placeholder="Pilot" required />
+    <input type="text" name="aircraft" placeholder="Aircraft (e.g. ODV)" maxlength="3" required />
+  </form>
+
+  <form id="product-form" class="product-inputs">
+    <input type="text" name="name" placeholder="Product Name" required />
+    <input type="number" step="0.001" name="rate" placeholder="Rate" required />
+    <select name="unit">
+      <option value="L">L</option>
+      <option value="kg">kg</option>
+    </select>
+    <input type="number" name="container" placeholder="Container Size" required />
+    <input type="number" name="count" placeholder="# Containers" required />
+    <button type="submit">Add Product</button>
+  </form>
+
+  <div id="product-list" class="product-inputs"></div>
+  <button onclick="startJob()">➡️ Start Mixing</button>
+
+  <script src="setup.js"></script>
+</body>
+</html>
