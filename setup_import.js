@@ -1,0 +1,1 @@
+// Full setup import logic with multiple containers
