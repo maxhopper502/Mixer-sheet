@@ -1,1 +1,0 @@
-// updated job.js with mixed container logic and global buttons
