@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setup Mixing Job</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 0; }
+    header { background: #0077b6; color: white; padding: 15px; font-size: 18px; }
+    .container { padding: 15px; }
+    .grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .grid label { flex: 1 1 45%; }
+    input, select { width: 100%; padding: 6px; margin-top: 4px; margin-bottom: 10px; }
+    button { margin-top: 10px; padding: 10px 20px; background: #0077b6; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #023e8a; }
+    .product { border: 1px solid #ccc; margin-top: 10px; padding: 10px; }
+  </style>
+</head>
+<body>
+  <header><strong>🧪 Aerial Mixing Job Setup</strong></header>
+  <div class="container">
+    <h3>Job Details</h3>
+    <div class="grid">
+      <label>Client: <input type="text" id="client" /></label>
+      <label>Crop: <input type="text" id="crop" /></label>
+      <label>Hectares: <input type="number" id="hectares" /></label>
+      <label>Water/Ha: <input type="number" id="waterPerHa" /></label>
+      <label>Loads: <input type="number" id="loads" /></label>
+      <label>Pilot: <input type="text" id="pilot" /></label>
+      <label>Aircraft: <input type="text" id="aircraft" maxlength="3" /></label>
+    </div>
+
+    <h3>Add Product</h3>
+    <div class="grid">
+      <label>Name: <input type="text" id="productName" /></label>
+      <label>Rate per Ha: <input type="number" id="productRate" step="0.001" /></label>
+      <label>Unit:
+        <select id="productUnit">
+          <option value="L">L</option>
+          <option value="kg">kg</option>
+        </select>
+      </label>
+      <label>Container Sizes (e.g. 20,110): <input type="text" id="productContainers" /></label>
+    </div>
+    <button onclick="addProductFromForm()">🧪 Add Product</button>
+    <div id="productList"></div>
+
+    <button onclick="startMixing()">▶️ Start Mixing</button>
+  </div>
+
+  <script>
+    const productList = [];
+
+    function addProduct(name, rate, unit, containers) {
+      productList.push({ name, rate, unit, containers });
+      renderProducts();
+    }
+
+    function addProductFromForm() {
+      const name = document.getElementById('productName').value;
+      const rate = parseFloat(document.getElementById('productRate').value);
+      const unit = document.getElementById('productUnit').value;
+      const containerSizes = document.getElementById('productContainers').value.split(',').map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+      const containers = containerSizes.map(size => ({ size, count: 1 }));
+
+      addProduct(name, rate, unit, containers);
+
+      document.getElementById('productName').value = '';
+      document.getElementById('productRate').value = '';
+      document.getElementById('productContainers').value = '';
+    }
+
+    function renderProducts() {
+      const container = document.getElementById('productList');
+      container.innerHTML = '';
+      productList.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'product';
+        div.innerHTML = `<strong>${p.name}</strong><br>Rate: ${p.rate} ${p.unit}/ha<br>Containers: ${p.containers.map(c => `${c.count} × ${c.size}${p.unit}`).join(', ')}`;
+        container.appendChild(div);
+      });
+    }
+
+    function startMixing() {
+      const jobData = {
+        client: document.getElementById('client').value,
+        crop: document.getElementById('crop').value,
+        hectares: parseFloat(document.getElementById('hectares').value),
+        volPerHa: parseFloat(document.getElementById('waterPerHa').value),
+        loads: parseInt(document.getElementById('loads').value),
+        pilot: document.getElementById('pilot').value,
+        aircraft: document.getElementById('aircraft').value
+      };
+      localStorage.setItem('jobData', JSON.stringify(jobData));
+      localStorage.setItem('products', JSON.stringify(productList));
+      window.location.href = 'job.html';
+    }
+  </script>
+</body>
+</html>
