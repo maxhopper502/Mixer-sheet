@@ -26,6 +26,7 @@ window.onload = function () {
   let currentLoad = 0;
   const containerState = products.map(p => [...p.containers]);
   const productsDiv = document.getElementById("products");
+  const buttonsContainer = document.getElementById("buttons-container");
 
   function updateProductRemaining() {
     const summary = document.getElementById("stock-summary");
@@ -48,8 +49,8 @@ window.onload = function () {
     const loadDiv = document.createElement("div");
     loadDiv.className = "load-block";
     loadDiv.innerHTML = `<h3>Load ${currentLoad + 1}</h3>`;
-    const addedStatus = new Array(products.length).fill(false);
-    const addButtons = [];
+
+    const allAdded = new Array(products.length).fill(false);
 
     products.forEach((product, index) => {
       const totalPerLoad = product.rate * job.loadArea;
@@ -75,25 +76,15 @@ window.onload = function () {
       loadDiv.appendChild(pDiv);
 
       const button = pDiv.querySelector("button");
-      addButtons.push(button);
-
       button.onclick = () => {
-        addedStatus[index] = !addedStatus[index];
-        if (addedStatus[index]) {
-          button.textContent = "✅ Added";
-          button.style.background = "#28a745";
-        } else {
-          button.textContent = "🧪 Add";
-          button.style.background = "";
-        }
+        button.disabled = true;
+        button.textContent = "✅ Added";
+        button.style.background = "#28a745";
+        allAdded[index] = true;
 
-        const allAdded = addedStatus.every(Boolean);
-        const existingLoadedBtn = loadDiv.querySelector(".load-confirm");
-
-        if (allAdded && !existingLoadedBtn) {
+        if (allAdded.filter(Boolean).length === products.length) {
           const loadedBtn = document.createElement("button");
-          loadedBtn.textContent = "➕ Load Plane";
-          loadedBtn.className = "load-confirm";
+          loadedBtn.textContent = "➕ Add Load";
           loadedBtn.onclick = () => {
             loadedBtn.disabled = true;
             loadedBtn.textContent = "✅ Loaded";
@@ -108,14 +99,14 @@ window.onload = function () {
           };
           loadDiv.appendChild(loadedBtn);
         }
-
-        if (!allAdded && existingLoadedBtn) {
-          existingLoadedBtn.remove();
-        }
       };
     });
 
-    // Delete Load only
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "✏️ Edit Load";
+    editBtn.onclick = () => alert("Edit Load (not yet implemented)");
+    loadDiv.appendChild(editBtn);
+
     const delBtn = document.createElement("button");
     delBtn.textContent = "🗑️ Delete Load";
     delBtn.onclick = () => {
@@ -124,18 +115,16 @@ window.onload = function () {
         currentLoad--;
       }
     };
-    delBtn.style.position = "absolute";
-    delBtn.style.top = "10px";
-    delBtn.style.right = "10px";
-    loadDiv.style.position = "relative";
     loadDiv.appendChild(delBtn);
 
     productsDiv.appendChild(loadDiv);
   }
 
+  // Init first load button
   renderLoadBlock();
   updateProductRemaining();
 };
+
 
 // Global Edit/Delete Job buttons
 window.addEventListener("DOMContentLoaded", () => {
