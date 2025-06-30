@@ -23,102 +23,85 @@ window.onload = function () {
   document.getElementById("loadVolume").textContent = Math.round(job.loadVolume);
   document.getElementById("loads").textContent = job.loads;
 
-  state.products = products.map(p => ({
-    ...p,
-    remaining: [...p.containers],
-    used: [],
-  }));
+  let currentLoad = 0;
+  const containerState = products.map(p => [...p.containers]);
+  const productsDiv = document.getElementById("products");
 
-  updateDisplay();
-};
-
-const state = {
-  loadNumber: 1,
-  products: [],
-  loads: []
-};
-
-function updateDisplay() {
-  const container = document.getElementById("products");
-  container.innerHTML = "";
-
-  for (let i = 0; i < state.loads.length; i++) {
-    const load = state.loads[i];
-    const div = document.createElement("div");
-    div.className = "load-block";
-
-    let html = `<h3>Load ${load.number}</h3>`;
-    for (let chem of load.products) {
-      html += `<p>${chem.name}: ${chem.amount.toFixed(2)} ${chem.unit}</p>`;
+  function renderLoadBlock() {
+    if (currentLoad >= job.loads) {
+      alert("✅ All loads complete");
+      return;
     }
-    html += `<p>✅ Loaded at ${load.timestamp}</p>`;
-    div.innerHTML = html;
-    container.appendChild(div);
-  }
 
-  const canAdd = state.loadNumber <= JSON.parse(localStorage.getItem("mixerJob")).loads;
-  const button = document.querySelector("button[onclick='addLoad()']");
-  button.disabled = !canAdd;
+    const loadDiv = document.createElement("div");
+    loadDiv.className = "load-block";
+    loadDiv.innerHTML = `<h3>Load ${currentLoad + 1}</h3>`;
 
-  // Show product remaining summary
-  const stock = document.createElement("div");
-  stock.id = "stock-summary";
-  stock.innerHTML = "<h4>Product Remaining</h4>";
-  state.products.forEach(p => {
-    const total = p.remaining.reduce((a, b) => a + b, 0).toFixed(2);
-    stock.innerHTML += `<p>${p.name}: ${total} ${p.unit}</p>`;
-  });
-  container.appendChild(stock);
-}
+    const allAdded = [];
+    products.forEach((product, index) => {
+      const totalPerLoad = product.rate * job.loadArea;
+      let remaining = totalPerLoad;
+      const fromContainers = [];
 
-function addLoad() {
-  const job = JSON.parse(localStorage.getItem("mixerJob"));
-  const newLoad = {
-    number: state.loadNumber,
-    products: [],
-    timestamp: new Date().toLocaleTimeString()
-  };
-
-  for (let p of state.products) {
-    const totalNeeded = p.rate * job.loadArea;
-    let pulled = 0;
-    let from = [];
-
-    while (pulled < totalNeeded && p.remaining.length > 0) {
-      const current = p.remaining[0];
-      const take = Math.min(current, totalNeeded - pulled);
-      pulled += take;
-
-      if (take < current) {
-        p.remaining[0] -= take;
-      } else {
-        p.remaining.shift();
+      for (let i = 0; i < containerState[index].length && remaining > 0; i++) {
+        const available = containerState[index][i];
+        if (available > 0) {
+          const used = Math.min(available, remaining);
+          containerState[index][i] -= used;
+          remaining -= used;
+          fromContainers.push(`Container ${i + 1}: ${used.toFixed(2)} ${product.unit}`);
+        }
       }
 
-      from.push(take);
-    }
+      const pDiv = document.createElement("div");
+      pDiv.innerHTML = `
+        <p><strong>${product.name}</strong>: ${totalPerLoad.toFixed(2)} ${product.unit}</p>
+        <ul>${fromContainers.map(c => `<li>${c}</li>`).join("")}</ul>
+        <button class="add-btn">✅ Added</button>
+      `;
+      loadDiv.appendChild(pDiv);
 
-    p.used.push(from);
-    newLoad.products.push({
-      name: p.name,
-      unit: p.unit,
-      amount: pulled
+      const button = pDiv.querySelector("button");
+      button.onclick = () => {
+        button.disabled = true;
+        button.textContent = "✔ Added";
+        allAdded[index] = true;
+        if (allAdded.filter(Boolean).length === products.length) {
+          const loadedBtn = document.createElement("button");
+          loadedBtn.textContent = "✅ Loaded";
+          loadedBtn.onclick = () => {
+            const ts = new Date().toLocaleTimeString();
+            const tsP = document.createElement("p");
+            tsP.textContent = `🕒 Loaded at ${ts}`;
+            loadDiv.appendChild(tsP);
+            document.getElementById("buttons-container").appendChild(loadBtn());
+          };
+          loadDiv.appendChild(loadedBtn);
+        }
+      };
     });
+
+    productsDiv.appendChild(loadDiv);
   }
 
-  state.loads.push(newLoad);
-  state.loadNumber++;
-  updateDisplay();
-}
-
-function editJob() {
-  window.location.href = "setup.html";
-}
-
-function deleteJob() {
-  if (confirm("Clear this job and start again?")) {
-    localStorage.removeItem("mixerJob");
-    localStorage.removeItem("mixerProducts");
-    window.location.href = "setup.html";
+  function loadBtn() {
+    const btn = document.createElement("button");
+    btn.textContent = "➕ Load";
+    btn.onclick = () => {
+      btn.remove();
+      currentLoad++;
+      renderLoadBlock();
+    };
+    return btn;
   }
-}
+
+  document.getElementById("buttons-container").appendChild(loadBtn());
+
+  const summary = document.createElement("div");
+  summary.id = "stock-summary";
+  summary.innerHTML = `<h4>Product Remaining</h4>` + products.map((p, i) => {
+    const total = containerState[i].reduce((a, b) => a + b, 0).toFixed(2);
+    return `<p><strong>${p.name}</strong>: ${total} ${p.unit}</p>`;
+  }).join("");
+  document.body.appendChild(summary);
+};
