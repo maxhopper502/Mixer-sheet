@@ -26,6 +26,19 @@ window.onload = function () {
   let currentLoad = 0;
   const containerState = products.map(p => [...p.containers]);
   const productsDiv = document.getElementById("products");
+  const buttonsContainer = document.getElementById("buttons-container");
+
+  function updateProductRemaining() {
+    const summary = document.getElementById("stock-summary");
+    if (summary) summary.remove();
+    const newSummary = document.createElement("div");
+    newSummary.id = "stock-summary";
+    newSummary.innerHTML = `<h4>Product Remaining</h4>` + products.map((p, i) => {
+      const total = containerState[i].reduce((a, b) => a + b, 0).toFixed(2);
+      return `<p><strong>${p.name}</strong>: ${total} ${p.unit}</p>`;
+    }).join("");
+    document.body.appendChild(newSummary);
+  }
 
   function renderLoadBlock() {
     if (currentLoad >= job.loads) {
@@ -37,7 +50,8 @@ window.onload = function () {
     loadDiv.className = "load-block";
     loadDiv.innerHTML = `<h3>Load ${currentLoad + 1}</h3>`;
 
-    const allAdded = [];
+    const allAdded = new Array(products.length).fill(false);
+
     products.forEach((product, index) => {
       const totalPerLoad = product.rate * job.loadArea;
       let remaining = totalPerLoad;
@@ -57,51 +71,83 @@ window.onload = function () {
       pDiv.innerHTML = `
         <p><strong>${product.name}</strong>: ${totalPerLoad.toFixed(2)} ${product.unit}</p>
         <ul>${fromContainers.map(c => `<li>${c}</li>`).join("")}</ul>
-        <button class="add-btn">✅ Added</button>
+        <button class="add-btn">🧪 Add</button>
       `;
       loadDiv.appendChild(pDiv);
 
       const button = pDiv.querySelector("button");
       button.onclick = () => {
         button.disabled = true;
-        button.textContent = "✔ Added";
+        button.textContent = "✅ Added";
+        button.style.background = "#28a745";
         allAdded[index] = true;
+
         if (allAdded.filter(Boolean).length === products.length) {
           const loadedBtn = document.createElement("button");
-          loadedBtn.textContent = "✅ Loaded";
+          loadedBtn.textContent = "➕ Add Load";
           loadedBtn.onclick = () => {
+            loadedBtn.disabled = true;
+            loadedBtn.textContent = "✅ Loaded";
+            loadedBtn.style.background = "#28a745";
             const ts = new Date().toLocaleTimeString();
             const tsP = document.createElement("p");
             tsP.textContent = `🕒 Loaded at ${ts}`;
             loadDiv.appendChild(tsP);
-            document.getElementById("buttons-container").appendChild(loadBtn());
+            currentLoad++;
+            renderLoadBlock();
+            updateProductRemaining();
           };
           loadDiv.appendChild(loadedBtn);
         }
       };
     });
 
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "✏️ Edit Load";
+    editBtn.onclick = () => alert("Edit Load (not yet implemented)");
+    loadDiv.appendChild(editBtn);
+
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "🗑️ Delete Load";
+    delBtn.onclick = () => {
+      if (confirm("Delete this load?")) {
+        loadDiv.remove();
+        currentLoad--;
+      }
+    };
+    loadDiv.appendChild(delBtn);
+
     productsDiv.appendChild(loadDiv);
   }
 
-  function loadBtn() {
-    const btn = document.createElement("button");
-    btn.textContent = "➕ Load";
-    btn.onclick = () => {
-      btn.remove();
-      currentLoad++;
-      renderLoadBlock();
-    };
-    return btn;
-  }
-
-  document.getElementById("buttons-container").appendChild(loadBtn());
-
-  const summary = document.createElement("div");
-  summary.id = "stock-summary";
-  summary.innerHTML = `<h4>Product Remaining</h4>` + products.map((p, i) => {
-    const total = containerState[i].reduce((a, b) => a + b, 0).toFixed(2);
-    return `<p><strong>${p.name}</strong>: ${total} ${p.unit}</p>`;
-  }).join("");
-  document.body.appendChild(summary);
+  // Init first load button
+  renderLoadBlock();
+  updateProductRemaining();
 };
+
+
+// Global Edit/Delete Job buttons
+window.addEventListener("DOMContentLoaded", () => {
+  const btnWrap = document.createElement("div");
+  btnWrap.style.margin = "30px 12px";
+
+  const editJobBtn = document.createElement("button");
+  editJobBtn.textContent = "✏️ Edit Job";
+  editJobBtn.onclick = () => {
+    window.location.href = "setup.html";
+  };
+
+  const deleteJobBtn = document.createElement("button");
+  deleteJobBtn.textContent = "🗑️ Delete Job";
+  deleteJobBtn.onclick = () => {
+    if (confirm("Are you sure you want to delete this job?")) {
+      localStorage.removeItem("mixerJob");
+      localStorage.removeItem("mixerProducts");
+      window.location.href = "setup.html";
+    }
+  };
+
+  btnWrap.appendChild(editJobBtn);
+  btnWrap.appendChild(deleteJobBtn);
+  document.body.appendChild(btnWrap);
+});
