@@ -100,14 +100,7 @@ window.onload = function () {
           loadDiv.appendChild(loadedBtn);
         }
       };
-    });
-
-    const editBtn = document.createElement("button");
-    editBtn.textContent = "✏️ Edit Load";
-    editBtn.onclick = () => alert("Edit Load (not yet implemented)");
-    loadDiv.appendChild(editBtn);
-
-    const delBtn = document.createElement("button");
+    });const delBtn = document.createElement("button");
     delBtn.textContent = "🗑️ Delete Load";
     delBtn.onclick = () => {
       if (confirm("Delete this load?")) {
