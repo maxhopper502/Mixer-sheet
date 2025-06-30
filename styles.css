@@ -35,13 +35,7 @@ body.job .job-details div {
   margin: 3px 0;
 }
 
-.load-block {
-  background: #f9f9f9;
-  border: 2px solid #ccc;
-  padding: 12px;
-  margin: 12px;
-  border-radius: 6px;
-}
+.load-block { margin-top: 4px; padding: 12px; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 12px; }
 
 .load-block button {
   margin: 5px 5px 10px 0;
