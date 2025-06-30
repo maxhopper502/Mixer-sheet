@@ -151,3 +151,29 @@ window.addEventListener("DOMContentLoaded", () => {
   btnWrap.appendChild(deleteJobBtn);
   
 });
+
+
+// Add footer Edit/Delete Job buttons at the bottom
+const footer = document.createElement('div');
+footer.style.textAlign = 'center';
+footer.style.margin = '30px 10px';
+
+const editJobBtn = document.createElement('button');
+editJobBtn.innerText = '✏️ Edit Job';
+editJobBtn.className = 'btn';
+editJobBtn.onclick = () => {
+  window.location.href = 'setup.html?edit=1';
+};
+
+const deleteJobBtn = document.createElement('button');
+deleteJobBtn.innerText = '❌ Delete Job';
+deleteJobBtn.className = 'btn';
+deleteJobBtn.style.marginLeft = '10px';
+deleteJobBtn.onclick = () => {
+  localStorage.clear();
+  window.location.href = 'setup.html';
+};
+
+footer.appendChild(editJobBtn);
+footer.appendChild(deleteJobBtn);
+document.body.appendChild(footer);
