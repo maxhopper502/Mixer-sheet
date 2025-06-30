@@ -115,7 +115,7 @@ window.onload = function () {
         currentLoad--;
       }
     };
-    loadDiv.appendChild(delBtn);
+    delBtn.style.float = 'right'; loadDiv.appendChild(delBtn);
 
     productsDiv.appendChild(loadDiv);
   }
