@@ -103,12 +103,12 @@ window.onload = function () {
     });
 
     const editBtn = document.createElement("button");
-    editBtn.textContent = "";
+    editBtn.textContent = "✏️ Edit Load";
     editBtn.onclick = () => alert("Edit Load (not yet implemented)");
     loadDiv.appendChild(editBtn);
 
     const delBtn = document.createElement("button");
-    delBtn.textContent = "";
+    delBtn.textContent = "🗑️ Delete Load";
     delBtn.onclick = () => {
       if (confirm("Delete this load?")) {
         loadDiv.remove();
@@ -149,5 +149,5 @@ window.addEventListener("DOMContentLoaded", () => {
 
   btnWrap.appendChild(editJobBtn);
   btnWrap.appendChild(deleteJobBtn);
-  document.body.appendChild(btnWrap);
+  
 });
