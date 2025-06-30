@@ -102,7 +102,19 @@ window.onload = function () {
       };
     });
 
-    
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "✏️ ✏️ Edit Job";
+    editBtn.onclick = () => alert("✏️ Edit Job (not yet implemented)");
+    loadDiv.appendChild(editBtn);
+
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "🗑️ ❌ Delete Job";
+    delBtn.onclick = () => {
+      if (confirm("Delete this load?")) {
+        loadDiv.remove();
+        currentLoad--;
+      }
+    };
     loadDiv.appendChild(delBtn);
 
     productsDiv.appendChild(loadDiv);
