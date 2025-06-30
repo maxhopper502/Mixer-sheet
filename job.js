@@ -100,7 +100,14 @@ window.onload = function () {
           loadDiv.appendChild(loadedBtn);
         }
       };
-    });const delBtn = document.createElement("button");
+    });
+
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "✏️ Edit Load";
+    editBtn.onclick = () => alert("Edit Load (not yet implemented)");
+    loadDiv.appendChild(editBtn);
+
+    const delBtn = document.createElement("button");
     delBtn.textContent = "🗑️ Delete Load";
     delBtn.onclick = () => {
       if (confirm("Delete this load?")) {
@@ -108,7 +115,7 @@ window.onload = function () {
         currentLoad--;
       }
     };
-    delBtn.style.float = 'right'; loadDiv.appendChild(delBtn);
+    loadDiv.appendChild(delBtn);
 
     productsDiv.appendChild(loadDiv);
   }
@@ -140,9 +147,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   };
 
+  btnWrap.appendChild(editJobBtn);
+  btnWrap.appendChild(deleteJobBtn);
   document.body.appendChild(btnWrap);
 });
-
-
-// Append footer to body
-document.body.appendChild(footer);
