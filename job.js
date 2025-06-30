@@ -142,3 +142,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   document.body.appendChild(btnWrap);
 });
+
+
+// Append footer to body
+document.body.appendChild(footer);
