@@ -100,7 +100,14 @@ window.onload = function () {
           loadDiv.appendChild(loadedBtn);
         }
       };
-    });const delBtn = document.createElement("button");
+    });
+
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "✏️ Edit Load";
+    editBtn.onclick = () => alert("Edit Load (not yet implemented)");
+    loadDiv.appendChild(editBtn);
+
+    const delBtn = document.createElement("button");
     delBtn.textContent = "🗑️ Delete Load";
     delBtn.onclick = () => {
       if (confirm("Delete this load?")) {
@@ -144,6 +151,3 @@ window.addEventListener("DOMContentLoaded", () => {
   btnWrap.appendChild(deleteJobBtn);
   document.body.appendChild(btnWrap);
 });
-
-
-document.body.style.paddingBottom = '100px';
