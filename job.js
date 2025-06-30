@@ -151,3 +151,6 @@ window.addEventListener("DOMContentLoaded", () => {
   btnWrap.appendChild(deleteJobBtn);
   document.body.appendChild(btnWrap);
 });
+
+
+document.body.style.paddingBottom = '100px';
