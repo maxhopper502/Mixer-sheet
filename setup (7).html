@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mixer Setup</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+</head>
+<body class="setup">
+
+<div class="header">Mixer Job Setup</div>
+
+<div style="padding: 12px;">
+  <input type="file" id="importFile" />
+  <input type="file" id="photoInput" accept="image/*" capture="environment" />
+  <button onclick="importFromPhoto()">📷 Import from Photo</button>
+</div>
+
+<form id="job-form" class="job-inputs">
+  <input type="text" name="client" placeholder="Client Name" />
+  <input type="text" name="crop" placeholder="Crop Type" />
+  <input type="text" name="pilot" placeholder="Pilot Name" />
+  <input type="text" name="aircraft" placeholder="Aircraft ID" />
+  <input type="number" name="hectares" placeholder="Total Hectares" />
+  <input type="number" name="volPerHa" placeholder="Volume per Hectare (L)" />
+  <input type="number" name="loads" placeholder="Number of Loads" />
+</form>
+
+<hr/>
+
+<h3>Add Product</h3>
+<form id="product-form" class="product-inputs">
+  <input type="text" name="name" placeholder="Product Name" />
+  <input type="number" step="0.001" name="rate" placeholder="Rate per Ha" />
+  <select name="unit">
+    <option value="L">Litres</option>
+    <option value="kg">Kilograms</option>
+  </select>
+  <input type="number" name="container" placeholder="Container Size" />
+  <input type="number" name="count" placeholder="How Many?" />
+  <button type="submit">🧪 Add Product</button>
+</form>
+
+<div id="product-list" style="padding:12px;"></div>
+
+<div style="padding: 12px;">
+  <button onclick="startJob()">▶️ Start Mixing</button>
+</div>
+
+<pre id="ocrOutput" style="padding:10px; background:#eee; white-space:pre-wrap;"></pre>
+
+<script src="setup.js"></script>
+</body>
+</html>
