@@ -1,0 +1,227 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mixer Setup</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="setup">
+
+<div class="header">Mixer Job Setup</div>
+
+<div style="padding: 12px;">
+  <input type="file" id="importFile" />
+  <button onclick="importJob()">📂 Import Job</button>
+</div>
+
+<div class="job-inputs">
+  <input type="text" id="client" placeholder="Client Name" />
+  <input type="text" id="crop" placeholder="Crop Type" />
+  <input type="text" id="pilot" placeholder="Pilot Name" />
+  <input type="text" id="aircraft" placeholder="Aircraft ID" />
+  <input type="number" id="hectares" placeholder="Total Hectares" />
+  <input type="number" id="volPerHa" placeholder="Volume per Hectare (L)" />
+  <input type="number" id="loads" placeholder="Number of Loads" />
+</div>
+
+<hr/>
+
+<h3>Add Product</h3>
+<div class="product-inputs">
+  <input type="text" id="productName" placeholder="Product Name" />
+  <input type="number" id="rate" step="0.001" placeholder="Rate per Ha" />
+  <select id="unit">
+    <option value="L">Litres</option>
+    <option value="kg">Kilograms</option>
+  </select>
+  <div>
+    <label>Container Set 1:</label>
+    <input type="number" id="containerSize1" placeholder="Size" />
+    <input type="number" id="containerCount1" placeholder="How Many?" />
+  </div>
+  <div>
+    <label>Container Set 2:</label>
+    <input type="number" id="containerSize2" placeholder="Size" />
+    <input type="number" id="containerCount2" placeholder="How Many?" />
+  </div>
+  <button onclick="addProduct()">🧪 Add Product</button>
+</div>
+
+<div id="productList"></div>
+
+<div style="padding: 12px;">
+  <button onclick="startJob()">▶️ Start Mixing</button>
+</div>
+
+<script>
+let products = [];
+
+function addProduct() {
+  const name = document.getElementById("productName").value.trim();
+  const rate = parseFloat(document.getElementById("rate").value);
+  const unit = document.getElementById("unit").value;
+
+  const size1 = parseFloat(document.getElementById("containerSize1").value);
+  const count1 = parseInt(document.getElementById("containerCount1").value);
+  const size2 = parseFloat(document.getElementById("containerSize2").value);
+  const count2 = parseInt(document.getElementById("containerCount2").value);
+
+  let containers = [];
+  if (size1 && count1 > 0) {
+    for (let i = 0; i < count1; i++) containers.push(size1);
+  }
+  if (size2 && count2 > 0) {
+    for (let i = 0; i < count2; i++) containers.push(size2);
+  }
+
+  if (!name || !rate || containers.length === 0) return;
+
+  const jobArea = parseFloat(document.getElementById("hectares").value);
+  const required = (rate * jobArea).toFixed(2);
+  const supplied = containers.reduce((a,b)=>a+b,0).toFixed(2);
+  const sufficient = supplied >= required;
+  const status = sufficient ? "✅" : "❌";
+
+  products.push({ name, rate, unit, containers });
+
+  const div = document.createElement("div");
+  div.className = "product-tile";
+  div.innerHTML = `
+    <p><strong>${name}</strong> – ${rate} ${unit}/ha</p>
+    <p>Required: ${required} ${unit}, Supplied: ${supplied} ${unit} <strong>${status}</strong></p>
+    <p>${containers.length} containers</p>
+    <button onclick="editProduct(${products.length - 1})">✏️ Edit</button>
+    <button onclick="deleteProduct(${products.length - 1})">🗑️ Delete</button>
+  `;
+  document.getElementById("productList").appendChild(div);
+
+  document.getElementById("productName").value = "";
+  document.getElementById("rate").value = "";
+  document.getElementById("containerSize1").value = "";
+  document.getElementById("containerCount1").value = "";
+  document.getElementById("containerSize2").value = "";
+  document.getElementById("containerCount2").value = "";
+}
+
+function editProduct(index) {
+  const p = products[index];
+  document.getElementById("productName").value = p.name;
+  document.getElementById("rate").value = p.rate;
+  document.getElementById("unit").value = p.unit;
+
+  const grouped = p.containers.reduce((acc, size) => {
+    acc[size] = (acc[size] || 0) + 1;
+    return acc;
+  }, {});
+  const sizes = Object.entries(grouped);
+  if (sizes[0]) {
+    document.getElementById("containerSize1").value = sizes[0][0];
+    document.getElementById("containerCount1").value = sizes[0][1];
+  }
+  if (sizes[1]) {
+    document.getElementById("containerSize2").value = sizes[1][0];
+    document.getElementById("containerCount2").value = sizes[1][1];
+  }
+
+  products.splice(index, 1);
+  document.getElementById("productList").children[index].remove();
+}
+
+function deleteProduct(index) {
+  products.splice(index, 1);
+  document.getElementById("productList").children[index].remove();
+}
+
+function startJob() {
+  const job = {
+    client: document.getElementById("client").value,
+    crop: document.getElementById("crop").value,
+    pilot: document.getElementById("pilot").value,
+    aircraft: document.getElementById("aircraft").value,
+    hectares: parseFloat(document.getElementById("hectares").value),
+    volPerHa: parseFloat(document.getElementById("volPerHa").value),
+    loads: parseInt(document.getElementById("loads").value)
+  };
+
+  if (!job.client || !job.hectares || !job.volPerHa || !job.loads || products.length === 0) {
+    alert("Please complete all job and product details.");
+    return;
+  }
+
+  localStorage.setItem("mixerJob", JSON.stringify(job));
+  localStorage.setItem("mixerProducts", JSON.stringify(products));
+  window.location.href = "job.html";
+}
+
+function importJob() {
+  const file = document.getElementById("importFile").files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.client && data.hectares && data.volPerHa && data.loads && data.products) {
+        localStorage.setItem("mixerJob", JSON.stringify({
+          client: data.client,
+          crop: data.crop || "",
+          pilot: data.pilot || "",
+          aircraft: data.aircraft || "",
+          hectares: data.hectares,
+          volPerHa: data.volPerHa,
+          loads: data.loads
+        }));
+        localStorage.setItem("mixerProducts", JSON.stringify(data.products));
+        window.location.href = "job.html";
+      } else {
+        alert("Invalid job file.");
+      }
+    } catch (err) {
+      alert("Error reading file.");
+    }
+  };
+  reader.readAsText(file);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const job = JSON.parse(localStorage.getItem("mixerJob"));
+  const productsSaved = JSON.parse(localStorage.getItem("mixerProducts"));
+
+  if (job) {
+    document.getElementById("client").value = job.client || "";
+    document.getElementById("crop").value = job.crop || "";
+    document.getElementById("pilot").value = job.pilot || "";
+    document.getElementById("aircraft").value = job.aircraft || "";
+    document.getElementById("hectares").value = job.hectares || "";
+    document.getElementById("volPerHa").value = job.volPerHa || "";
+    document.getElementById("loads").value = job.loads || "";
+  }
+
+  if (productsSaved && Array.isArray(productsSaved)) {
+    products = productsSaved;
+    const productList = document.getElementById("productList");
+    productList.innerHTML = "";
+    products.forEach((p, index) => {
+      const required = (p.rate * job.hectares).toFixed(2);
+      const supplied = p.containers.reduce((a, b) => a + b, 0).toFixed(2);
+      const status = supplied >= required ? "✅" : "❌";
+      const div = document.createElement("div");
+      div.className = "product-tile";
+      div.innerHTML = `
+        <p><strong>${p.name}</strong> – ${p.rate} ${p.unit}/ha</p>
+        <p>Required: ${required} ${p.unit}, Supplied: ${supplied} ${p.unit} <strong>${status}</strong></p>
+        <p>${p.containers.length} containers</p>
+        <button onclick="editProduct(${index})">✏️ Edit</button>
+        <button onclick="deleteProduct(${index})">🗑️ Delete</button>
+      `;
+      productList.appendChild(div);
+    });
+  }
+});
+
+</script>
+
+</body>
+</html>
