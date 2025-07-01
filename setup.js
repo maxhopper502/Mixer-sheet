@@ -1,4 +1,3 @@
-
 let products = JSON.parse(localStorage.getItem("mixerProducts") || "[]");
 let editIndex = null;
 
@@ -10,18 +9,19 @@ document.getElementById("importFile").addEventListener("change", function(evt) {
   reader.onload = function(e) {
     try {
       const data = JSON.parse(e.target.result);
-      if (!data.job || !data.products) throw "Invalid file format";
+      const job = data.job || data;
+      if (!job.client || !job.hectares || !data.products) throw "Invalid file format";
 
       const f = document.getElementById("job-form");
-      f.client.value = data.job.client || "";
-      f.crop.value = data.job.crop || "";
-      f.hectares.value = data.job.hectares || "";
-      f.loads.value = data.job.loads || "";
-      f.volPerHa.value = data.job.volPerHa || "";
-      f.pilot.value = data.job.pilot || "";
-      f.aircraft.value = data.job.aircraft || "";
+      f.client.value = job.client || "";
+      f.crop.value = job.crop || "";
+      f.hectares.value = job.hectares || "";
+      f.loads.value = job.loads || "";
+      f.volPerHa.value = job.volPerHa || "";
+      f.pilot.value = job.pilot || "";
+      f.aircraft.value = job.aircraft || "";
 
-      localStorage.setItem("mixerJob", JSON.stringify(data.job));
+      localStorage.setItem("mixerJob", JSON.stringify(job));
       localStorage.setItem("mixerProducts", JSON.stringify(data.products));
 
       products = data.products;
@@ -103,4 +103,4 @@ function startJob() {
   };
   localStorage.setItem("mixerJob", JSON.stringify(job));
   window.location.href = "job.html";
-}
+};
