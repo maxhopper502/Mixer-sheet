@@ -1,7 +1,10 @@
 
 window.onload = function () {
-  const job = JSON.parse(localStorage.getItem("mixerJob"));
-  const products = JSON.parse(localStorage.getItem("mixerProducts"));
+  const urlParams = new URLSearchParams(window.location.search);
+  const aircraft = urlParams.get("aircraft");
+
+  const job = JSON.parse(localStorage.getItem(`job_${aircraft}`));
+  const products = JSON.parse(localStorage.getItem(`products_${aircraft}`));
   if (!job || !products || products.length === 0) {
     alert("❌ No job or product found. Please import or set up a job first.");
     window.location.href = "setup.html";
@@ -24,7 +27,7 @@ window.onload = function () {
   document.getElementById("loads").textContent = job.loads;
 
   let currentLoad = 0;
-  const containerState = products.map(p => [...p.containers]);
+  const containerState = products.map(p => [...p.containers].sort((a, b) => a - b));
   const productsDiv = document.getElementById("products");
 
   function updateProductRemaining() {
@@ -123,7 +126,6 @@ window.onload = function () {
   updateProductRemaining();
 };
 
-// Global Edit/Delete Job buttons
 window.addEventListener("DOMContentLoaded", () => {
   const btnWrap = document.createElement("div");
   btnWrap.style.margin = "30px 12px";
@@ -137,9 +139,10 @@ window.addEventListener("DOMContentLoaded", () => {
   const deleteJobBtn = document.createElement("button");
   deleteJobBtn.textContent = "🗑️ Delete Job";
   deleteJobBtn.onclick = () => {
+    const aircraft = new URLSearchParams(location.search).get("aircraft");
     if (confirm("Are you sure you want to delete this job?")) {
-      localStorage.removeItem("mixerJob");
-      localStorage.removeItem("mixerProducts");
+      localStorage.removeItem(`job_${aircraft}`);
+      localStorage.removeItem(`products_${aircraft}`);
       window.location.href = "setup.html";
     }
   };
