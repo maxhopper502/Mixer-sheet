@@ -26,7 +26,6 @@ window.onload = function () {
   let currentLoad = 0;
   const containerState = products.map(p => [...p.containers]);
   const productsDiv = document.getElementById("products");
-  const buttonsContainer = document.getElementById("buttons-container");
 
   function updateProductRemaining() {
     const summary = document.getElementById("stock-summary");
@@ -49,7 +48,6 @@ window.onload = function () {
     const loadDiv = document.createElement("div");
     loadDiv.className = "load-block";
     loadDiv.innerHTML = `<h3>Load ${currentLoad + 1}</h3>`;
-
     const allAdded = new Array(products.length).fill(false);
 
     products.forEach((product, index) => {
@@ -70,8 +68,6 @@ window.onload = function () {
           fromContainers.push(line);
         }
       }
-        }
-      }
 
       const pDiv = document.createElement("div");
       pDiv.innerHTML = `
@@ -83,14 +79,22 @@ window.onload = function () {
 
       const button = pDiv.querySelector("button");
       button.onclick = () => {
-        button.disabled = true;
-        button.textContent = "✅ Added";
-        button.style.background = "#28a745";
-        allAdded[index] = true;
+        allAdded[index] = !allAdded[index];
+        if (allAdded[index]) {
+          button.textContent = "✅ Added";
+          button.style.background = "#28a745";
+        } else {
+          button.textContent = "🧪 Add";
+          button.style.background = "";
+        }
 
-        if (allAdded.filter(Boolean).length === products.length) {
+        const allConfirmed = allAdded.every(v => v);
+        const existingLoadedBtn = loadDiv.querySelector(".load-confirm");
+
+        if (allConfirmed && !existingLoadedBtn) {
           const loadedBtn = document.createElement("button");
-          loadedBtn.textContent = "➕ Add Load";
+          loadedBtn.textContent = "➕ Load Plane";
+          loadedBtn.className = "load-confirm";
           loadedBtn.onclick = () => {
             loadedBtn.disabled = true;
             loadedBtn.textContent = "✅ Loaded";
@@ -105,32 +109,19 @@ window.onload = function () {
           };
           loadDiv.appendChild(loadedBtn);
         }
+
+        if (!allConfirmed && existingLoadedBtn) {
+          existingLoadedBtn.remove();
+        }
       };
     });
-
-    const editBtn = document.createElement("button");
-    editBtn.textContent = "✏️ Edit Load";
-    editBtn.onclick = () => alert("Edit Load (not yet implemented)");
-    loadDiv.appendChild(editBtn);
-
-    const delBtn = document.createElement("button");
-    delBtn.textContent = "🗑️ Delete Load";
-    delBtn.onclick = () => {
-      if (confirm("Delete this load?")) {
-        loadDiv.remove();
-        currentLoad--;
-      }
-    };
-    loadDiv.appendChild(delBtn);
 
     productsDiv.appendChild(loadDiv);
   }
 
-  // Init first load button
   renderLoadBlock();
   updateProductRemaining();
 };
-
 
 // Global Edit/Delete Job buttons
 window.addEventListener("DOMContentLoaded", () => {
