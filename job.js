@@ -1,10 +1,7 @@
 
 window.onload = function () {
-  const urlParams = new URLSearchParams(window.location.search);
-  const aircraft = urlParams.get("aircraft");
-
-  const job = JSON.parse(localStorage.getItem(`job_${aircraft}`));
-  const products = JSON.parse(localStorage.getItem(`products_${aircraft}`));
+  const job = JSON.parse(localStorage.getItem("mixerJob"));
+  const products = JSON.parse(localStorage.getItem("mixerProducts"));
   if (!job || !products || products.length === 0) {
     alert("❌ No job or product found. Please import or set up a job first.");
     window.location.href = "setup.html";
@@ -27,8 +24,9 @@ window.onload = function () {
   document.getElementById("loads").textContent = job.loads;
 
   let currentLoad = 0;
-  const containerState = products.map(p => [...p.containers].sort((a, b) => a - b));
+  const containerState = products.map(p => [...p.containers]);
   const productsDiv = document.getElementById("products");
+  const buttonsContainer = document.getElementById("buttons-container");
 
   function updateProductRemaining() {
     const summary = document.getElementById("stock-summary");
@@ -51,6 +49,7 @@ window.onload = function () {
     const loadDiv = document.createElement("div");
     loadDiv.className = "load-block";
     loadDiv.innerHTML = `<h3>Load ${currentLoad + 1}</h3>`;
+
     const allAdded = new Array(products.length).fill(false);
 
     products.forEach((product, index) => {
@@ -71,6 +70,8 @@ window.onload = function () {
           fromContainers.push(line);
         }
       }
+        }
+      }
 
       const pDiv = document.createElement("div");
       pDiv.innerHTML = `
@@ -82,22 +83,14 @@ window.onload = function () {
 
       const button = pDiv.querySelector("button");
       button.onclick = () => {
-        allAdded[index] = !allAdded[index];
-        if (allAdded[index]) {
-          button.textContent = "✅ Added";
-          button.style.background = "#28a745";
-        } else {
-          button.textContent = "🧪 Add";
-          button.style.background = "";
-        }
+        button.disabled = true;
+        button.textContent = "✅ Added";
+        button.style.background = "#28a745";
+        allAdded[index] = true;
 
-        const allConfirmed = allAdded.every(v => v);
-        const existingLoadedBtn = loadDiv.querySelector(".load-confirm");
-
-        if (allConfirmed && !existingLoadedBtn) {
+        if (allAdded.filter(Boolean).length === products.length) {
           const loadedBtn = document.createElement("button");
-          loadedBtn.textContent = "➕ Load Plane";
-          loadedBtn.className = "load-confirm";
+          loadedBtn.textContent = "➕ Add Load";
           loadedBtn.onclick = () => {
             loadedBtn.disabled = true;
             loadedBtn.textContent = "✅ Loaded";
@@ -112,20 +105,34 @@ window.onload = function () {
           };
           loadDiv.appendChild(loadedBtn);
         }
-
-        if (!allConfirmed && existingLoadedBtn) {
-          existingLoadedBtn.remove();
-        }
       };
     });
+
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "✏️ Edit Load";
+    editBtn.onclick = () => alert("Edit Load (not yet implemented)");
+    loadDiv.appendChild(editBtn);
+
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "🗑️ Delete Load";
+    delBtn.onclick = () => {
+      if (confirm("Delete this load?")) {
+        loadDiv.remove();
+        currentLoad--;
+      }
+    };
+    loadDiv.appendChild(delBtn);
 
     productsDiv.appendChild(loadDiv);
   }
 
+  // Init first load button
   renderLoadBlock();
   updateProductRemaining();
 };
 
+
+// Global Edit/Delete Job buttons
 window.addEventListener("DOMContentLoaded", () => {
   const btnWrap = document.createElement("div");
   btnWrap.style.margin = "30px 12px";
@@ -139,10 +146,9 @@ window.addEventListener("DOMContentLoaded", () => {
   const deleteJobBtn = document.createElement("button");
   deleteJobBtn.textContent = "🗑️ Delete Job";
   deleteJobBtn.onclick = () => {
-    const aircraft = new URLSearchParams(location.search).get("aircraft");
     if (confirm("Are you sure you want to delete this job?")) {
-      localStorage.removeItem(`job_${aircraft}`);
-      localStorage.removeItem(`products_${aircraft}`);
+      localStorage.removeItem("mixerJob");
+      localStorage.removeItem("mixerProducts");
       window.location.href = "setup.html";
     }
   };

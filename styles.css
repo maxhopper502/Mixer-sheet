@@ -154,11 +154,3 @@ input, select {
     margin-top: 10px;
   }
 }
-
-/* iPhone-specific header spacing */
-@media screen and (max-width: 500px) {
-  #job-header > div {
-    margin-bottom: 6px;
-    line-height: 1.2;
-  }
-}
