@@ -1,0 +1,69 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mixer Setup</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="setup">
+
+<div class="header">Mixer Job Setup</div>
+
+<div style="padding: 12px;">
+  <input type="file" id="importFile" />
+</div>
+
+<form id="job-form" class="job-inputs">
+  <input type="text" name="client" placeholder="Client Name" />
+  <input type="text" name="orderNumber" placeholder="Order Number" />
+  <input type="text" name="crop" placeholder="Crop Type" />
+  <input type="text" name="pilot" placeholder="Pilot Name" />
+  <input type="text" name="aircraft" placeholder="Aircraft ID" />
+  <input type="number" name="hectares" placeholder="Total Hectares" />
+  <input type="number" name="volPerHa" placeholder="Volume per Hectare (L)" />
+  <input type="number" name="loads" placeholder="Number of Loads" />
+</form>
+
+<hr/>
+
+<h3>Add Product</h3>
+<form id="product-form" class="product-inputs">
+  <input type="text" name="name" placeholder="Product Name" />
+  <input type="number" step="0.001" name="rate" placeholder="Rate per Ha" id="rateField" />
+
+  <div style="margin: 6px 0;">
+    <input type="checkbox" id="useAll" onchange="autoCalcRate()" style="margin-right: 6px;" />
+    <label for="useAll" style="margin-right: 12px;">Use all supplied quantity</label>
+    <span id="autoRate" style="color: green; font-weight: bold;"></span>
+  </div>
+
+  <select name="unit">
+    <option value="L">Litres</option>
+    <option value="kg">Kilograms</option>
+  </select>
+
+  <div>
+    <label>Container Set 1:</label>
+    <input type="number" name="container1" placeholder="Size" />
+    <input type="number" name="count1" placeholder="How Many?" />
+  </div>
+  <div>
+    <label>Container Set 2:</label>
+    <input type="number" name="container2" placeholder="Size" />
+    <input type="number" name="count2" placeholder="How Many?" />
+  </div>
+
+  <button type="submit">🧪 Add Product</button>
+</form>
+
+<div id="product-list" style="padding:12px;"></div>
+
+<div style="padding: 12px;">
+  <button onclick="startJob()">▶️ Start Mixing</button>
+</div>
+
+<script src="setup.js"></script>
+</body>
+</html>
