@@ -189,13 +189,22 @@ function exportJob() {
     job: { ...job, mixer },
     products
   };
-
-  const { jsPDF } = window.jspdf;
+const { jsPDF } = window.jspdf;
 const doc = new jsPDF();
+const marginLeft = 10;
+let y = 15;
 
-  doc.setFontSize(14);
-  doc.text(`Mixer Sheet – ${job.aircraft}`, 14, 20);
-  doc.setFontSize(11);
+doc.setFontSize(14);
+doc.text(`Mixer Sheet – Client: ${job.client}`, marginLeft, y);
+y += 8;
+
+if (job.orderNumber) {
+  doc.setFontSize(12);
+  doc.text(`Work Order #: ${job.orderNumber}`, marginLeft, y);
+  y += 10;
+}
+
+ 
 
   doc.text(`Client: ${job.client}`, 14, 30);
   doc.text(`Crop: ${job.crop}`, 14, 36);
