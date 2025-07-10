@@ -180,18 +180,7 @@ function exportJob() {
   const mixer = prompt("Enter mixer name:");
   if (!mixer) return;
 
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  const marginLeft = 14;
-  let y = 20;
-
-  doc.setFontSize(16);
-  doc.text(`Mixer Sheet – Client: ${job.client}`, marginLeft, y);
-  y += 8;
-  if (job.orderNumber) {
-    doc.setFontSize(12);
-    doc.text(`Work Order #: ${job.orderNumber}`, marginLeft, y);
-    y += 8;
+ 
   }
 
   doc.setFontSize(11);
