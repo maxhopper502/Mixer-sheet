@@ -164,4 +164,29 @@ window.addEventListener("DOMContentLoaded", () => {
   btnWrap.appendChild(editJobBtn);
   btnWrap.appendChild(deleteJobBtn);
   document.body.appendChild(btnWrap);
+  function exportJob() {
+  const job = JSON.parse(localStorage.getItem("mixerJob"));
+  const products = JSON.parse(localStorage.getItem("mixerProducts"));
+
+  if (!job || !products || products.length === 0) {
+    alert("❌ No job or product data to export.");
+    return;
+  }
+
+  const mixer = prompt("Enter mixer name:");
+  if (!mixer) return;
+
+  const exportData = {
+    job: { ...job, mixer },
+    products
+  };
+
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `${job.aircraft || 'job'}_export.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
 });
