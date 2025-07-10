@@ -190,7 +190,9 @@ function exportJob() {
     products
   };
 
-  const doc = new jsPDF();
+  const { jsPDF } = window.jspdf;
+const doc = new jsPDF();
+
   doc.setFontSize(14);
   doc.text(`Mixer Sheet – ${job.aircraft}`, 14, 20);
   doc.setFontSize(11);
