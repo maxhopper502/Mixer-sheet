@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mixer Sheet — Jobs with Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body { font-family: sans-serif; margin: 2em; }
+    #login, #logout { margin-bottom: 1em; }
+    .job { border: 1px solid #ccc; margin-bottom: 1em; padding: 1em; }
+    .share-link { margin-top: .5em; }
+  </style>
+</head>
+<body>
+  <h1>Mixer Sheet: Jobs with Login</h1>
+  <div id="auth">
+    <div id="login">
+      <input id="email" placeholder="Email" type="email" />
+      <input id="password" placeholder="Password" type="password" />
+      <button onclick="signUp()">Sign Up</button>
+      <button onclick="signIn()">Sign In</button>
+    </div>
+    <div id="logout" style="display:none;">
+      <span id="user-email"></span>
+      <button onclick="signOut()">Log Out</button>
+    </div>
+  </div>
+  <div id="job-form" style="display:none;">
+    <h2>Add a Job</h2>
+    <input id="job-title" placeholder="Job Title" />
+    <input id="job-desc" placeholder="Job Description" />
+    <label><input type="checkbox" id="job-public" /> Make Public</label>
+    <button onclick="addJob()">Save Job</button>
+  </div>
+  <div id="jobs"></div>
+
+<script>
+  // Supabase credentials
+  const SUPABASE_URL = 'https://sembaaunjejulyjuztdoo.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlbWJhYW51ZWp1bHlqdXp0ZG9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwNTE1OTgsImV4cCI6MjA2OTYyNzU5OH0.A_bsJkcuiZx716Pj3fLX9tDutdVMHK39LYpUGxUZa6w';
+  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  async function signUp() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    let { error } = await supabase.auth.signUp({ email, password });
+    if (error) alert(error.message);
+    else alert('Check your email for confirmation!');
+  }
+
+  async function signIn() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    let { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) alert(error.message);
+    else loadSession();
+  }
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    loadSession();
+  }
+
+  async function loadSession() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session && session.user) {
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('logout').style.display = '';
+      document.getElementById('job-form').style.display = '';
+      document.getElementById('user-email').textContent = session.user.email;
+      loadJobs();
+    } else {
+      document.getElementById('login').style.display = '';
+      document.getElementById('logout').style.display = 'none';
+      document.getElementById('job-form').style.display = 'none';
+      document.getElementById('jobs').innerHTML = '';
+    }
+  }
+
+  async function addJob() {
+    const { data: { session } } = await supabase.auth.getSession();
+    const title = document.getElementById('job-title').value;
+    const description = document.getElementById('job-desc').value;
+    const isPublic = document.getElementById('job-public').checked;
+    if (!title) { alert('Title required'); return; }
+    await supabase
+      .from('jobs')
+      .insert([{ user_id: session.user.id, title, description, public: isPublic }]);
+    loadJobs();
+  }
+
+  async function loadJobs() {
+    const { data: { session } } = await supabase.auth.getSession();
+    let { data: jobs } = await supabase
+      .from('jobs')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('id', { ascending: false });
+    let html = '<h2>Your Jobs</h2>';
+    if (!jobs || jobs.length === 0) html += '<p>No jobs yet.</p>';
+    else jobs.forEach(job => {
+      html += `<div class="job">
+        <b>${job.title}</b><br>
+        ${job.description || ''}
+        <div>
+          <a class="share-link" href="?job=${job.id}" target="_blank">Share Link</a>
+          ${job.public ? '(Public)' : '(Private)'}
+        </div>
+      </div>`;
+    });
+    document.getElementById('jobs').innerHTML = html;
+  }
+
+  // On load, check for session and show job if ?job= in URL
+  window.onload = async function() {
+    loadSession();
+    // If shared job link
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('job')) {
+      const jobId = params.get('job');
+      let { data: job } = await supabase
+        .from('jobs')
+        .select('*')
+        .eq('id', jobId)
+        .single();
+      if (job && job.public) {
+        document.body.innerHTML = `<h1>${job.title}</h1><p>${job.description}</p><p>Shared via Mixer Sheet</p>`;
+      }
+    }
+  }
+</script>
+</body>
+</html>
