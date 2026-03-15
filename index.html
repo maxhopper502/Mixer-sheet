@@ -15,7 +15,6 @@
 
 <div class="container">
 
-  <!-- Quick Actions -->
   <div class="card" style="margin-top:16px">
     <div class="card-title">🚀 Quick Actions</div>
     <div class="action-grid">
@@ -38,7 +37,6 @@
     </div>
   </div>
 
-  <!-- Active Jobs -->
   <div class="card">
     <div class="card-title">✈️ Active Jobs</div>
     <div id="active-jobs-wrap">
@@ -52,7 +50,7 @@
 
 </div>
 
-<div class="app-footer">Mixer Sheet v3.0 — Multi-Aircraft Edition</div>
+<div class="app-footer">Mixer Sheet v3.1 — Multi-Aircraft Edition</div>
 
 <script>
   // ── Helpers ──────────────────────────────────────────────────────────────
@@ -60,23 +58,21 @@
     const jobs = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key && key.startsWith('job_')) {
-        try {
-          const aircraftId = key.slice(4);
-          const job = JSON.parse(localStorage.getItem(key));
-          const progress = JSON.parse(localStorage.getItem(`progress_${aircraftId}`)) || {};
-          const currentLoad = progress.currentLoad || 0;
-          const done = currentLoad >= (job.loads || 1);
-          jobs.push({ ...job, aircraftId, currentLoad, done });
-        } catch(e) {}
-      }
+      if (!key || !key.startsWith('job_')) continue;
+      try {
+        const job = JSON.parse(localStorage.getItem(key));
+        if (!job || !job.client) continue;                   // skip non-job keys
+        const jobId      = job.jobId || key.slice(4);        // backward compat
+        const progress   = JSON.parse(localStorage.getItem(`progress_${jobId}`)) || {};
+        const currentLoad = progress.currentLoad || 0;
+        const done        = currentLoad >= (job.loads || 1);
+        jobs.push({ ...job, jobId, currentLoad, done });
+      } catch(e) {}
     }
-    // Sort: incomplete first, then by aircraft name
-    return jobs.sort((a, b) => a.done - b.done || a.aircraftId.localeCompare(b.aircraftId));
+    return jobs.sort((a, b) => a.done - b.done || (a.client || '').localeCompare(b.client || ''));
   }
 
   function groupJobs(jobs) {
-    // Group by client + orderNumber (or just client if no order)
     const groups = {};
     jobs.forEach(j => {
       const key = `${j.client || '—'}_${j.orderNumber || ''}`;
@@ -88,9 +84,9 @@
 
   // ── Render ───────────────────────────────────────────────────────────────
   function renderJobs() {
-    const wrap = document.getElementById('active-jobs-wrap');
+    const wrap     = document.getElementById('active-jobs-wrap');
     const clearBtn = document.getElementById('clear-btn');
-    const jobs = getAllJobs();
+    const jobs     = getAllJobs();
 
     if (jobs.length === 0) {
       wrap.innerHTML = `<div class="empty-state"><div class="es-icon">📋</div><p>No active jobs. Create a new job to get started!</p></div>`;
@@ -103,9 +99,7 @@
     let html = '';
 
     groups.forEach(group => {
-      const multiAircraft = group.jobs.length > 1;
-
-      if (multiAircraft) {
+      if (group.jobs.length > 1) {
         html += `<div class="group-label">📋 ${group.label}${group.order ? ' &nbsp;·&nbsp; Order #' + group.order : ''} &nbsp;— ${group.jobs.length} aircraft</div>`;
       }
 
@@ -119,8 +113,8 @@
           <div class="job-card">
             <div class="job-card-header">
               <div>
-                <div class="job-card-title">✈️ ${job.aircraftId}</div>
-                <div class="job-card-sub">${job.pilot || '—'} · ${job.crop || '—'}</div>
+                <div class="job-card-title">✈️ ${job.aircraft || '—'}</div>
+                <div class="job-card-sub">${job.client || '—'} · ${job.crop || '—'} · ${job.pilot || '—'}</div>
               </div>
               ${statusBadge}
             </div>
@@ -136,12 +130,12 @@
             <div class="progress-label">${job.currentLoad} of ${job.loads} loads complete</div>
             <div class="job-card-actions">
               ${job.done
-                ? `<a href="job.html?aircraft=${encodeURIComponent(job.aircraftId)}" class="btn btn-ghost btn-sm">📋 View</a>`
-                : `<a href="job.html?aircraft=${encodeURIComponent(job.aircraftId)}" class="btn btn-green btn-sm">▶️ Continue</a>`
+                ? `<a href="job.html?jobId=${encodeURIComponent(job.jobId)}" class="btn btn-ghost btn-sm">📋 View</a>`
+                : `<a href="job.html?jobId=${encodeURIComponent(job.jobId)}" class="btn btn-green btn-sm">▶️ Continue</a>`
               }
-              <a href="setup.html?aircraft=${encodeURIComponent(job.aircraftId)}" class="btn btn-ghost btn-sm">✏️ Edit</a>
-              <button class="btn btn-orange btn-sm" onclick="addAircraftToJob('${job.client}','${job.orderNumber || ''}')">➕ Add Aircraft</button>
-              <button class="btn btn-red btn-sm" onclick="deleteJob('${job.aircraftId}')">🗑</button>
+              <a href="setup.html?jobId=${encodeURIComponent(job.jobId)}" class="btn btn-ghost btn-sm">✏️ Edit</a>
+              <button class="btn btn-orange btn-sm" onclick="addAircraftToJob('${escQ(job.client)}','${escQ(job.orderNumber||'')}')">➕ Add Aircraft</button>
+              <button class="btn btn-red btn-sm" onclick="deleteJob('${escQ(job.jobId)}')">🗑</button>
             </div>
           </div>`;
       });
@@ -150,16 +144,17 @@
     wrap.innerHTML = html;
   }
 
+  function escQ(s) { return (s||'').replace(/'/g, "\\'"); }
+
   function addAircraftToJob(client, orderNumber) {
-    const url = `setup.html?copyClient=${encodeURIComponent(client)}&copyOrder=${encodeURIComponent(orderNumber)}`;
-    window.location.href = url;
+    window.location.href = `setup.html?copyClient=${encodeURIComponent(client)}&copyOrder=${encodeURIComponent(orderNumber)}`;
   }
 
-  function deleteJob(aircraftId) {
-    if (!confirm(`Delete job for ${aircraftId}?`)) return;
-    localStorage.removeItem(`job_${aircraftId}`);
-    localStorage.removeItem(`products_${aircraftId}`);
-    localStorage.removeItem(`progress_${aircraftId}`);
+  function deleteJob(jobId) {
+    if (!confirm('Delete this job?')) return;
+    localStorage.removeItem(`job_${jobId}`);
+    localStorage.removeItem(`products_${jobId}`);
+    localStorage.removeItem(`progress_${jobId}`);
     renderJobs();
   }
 
@@ -168,7 +163,7 @@
     const keys = [];
     for (let i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
     keys.forEach(k => {
-      if (k.startsWith('job_') || k.startsWith('products_') || k.startsWith('progress_') || k === 'mixerJob' || k === 'mixerProducts') {
+      if (k && (k.startsWith('job_') || k.startsWith('products_') || k.startsWith('progress_'))) {
         localStorage.removeItem(k);
       }
     });
@@ -182,14 +177,15 @@
     const reader = new FileReader();
     reader.onload = function(e) {
       try {
-        const data = JSON.parse(e.target.result);
-        const job = data.job || data;
-        const importedProducts = data.products;
-        if (!job.client || !job.hectares || !importedProducts) throw 'Invalid file format';
-        const aircraft = (job.aircraft || 'UNKNOWN').trim().toUpperCase();
-        localStorage.setItem(`job_${aircraft}`, JSON.stringify(job));
-        localStorage.setItem(`products_${aircraft}`, JSON.stringify(importedProducts));
-        if (data.progress) localStorage.setItem(`progress_${aircraft}`, JSON.stringify(data.progress));
+        const data     = JSON.parse(e.target.result);
+        const job      = data.job || data;
+        const prods    = data.products;
+        if (!job.client || !job.hectares || !prods) throw 'Invalid file format';
+        const jobId    = job.jobId || Date.now().toString();
+        job.jobId      = jobId;
+        localStorage.setItem(`job_${jobId}`,      JSON.stringify(job));
+        localStorage.setItem(`products_${jobId}`, JSON.stringify(prods));
+        if (data.progress) localStorage.setItem(`progress_${jobId}`, JSON.stringify(data.progress));
         alert('✅ Job imported!');
         renderJobs();
       } catch(err) {
@@ -200,7 +196,6 @@
     this.value = '';
   });
 
-  // ── Boot ─────────────────────────────────────────────────────────────────
   renderJobs();
 </script>
 </body>

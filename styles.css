@@ -243,6 +243,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 }
 .switch-pill.active { border-color: var(--green); background: var(--green); color: #fff; }
 .switch-pill:hover:not(.active) { border-color: var(--blue); color: var(--blue); }
+.switch-pill-sub { display: block; font-size: 0.68rem; font-weight: 400; opacity: 0.8; margin-top: 1px; }
 
 /* ── Complete banner ── */
 .complete-banner {
