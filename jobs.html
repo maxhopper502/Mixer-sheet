@@ -2,132 +2,258 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Mixer Sheet — Jobs with Login</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <style>
-    body { font-family: sans-serif; margin: 2em; }
-    #login, #logout { margin-bottom: 1em; }
-    .job { border: 1px solid #ccc; margin-bottom: 1em; padding: 1em; }
-    .share-link { margin-top: .5em; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mixer Sheet — Jobs</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
-  <h1>Mixer Sheet: Jobs with Login</h1>
-  <div id="auth">
-    <div id="login">
-      <input id="email" placeholder="Email" type="email" />
-      <input id="password" placeholder="Password" type="password" />
-      <button onclick="signUp()">Sign Up</button>
-      <button onclick="signIn()">Sign In</button>
+  <div class="container">
+    <div class="header">
+      <h1>Jobs Dashboard</h1>
+      <p class="subtitle">Manage & Share Jobs</p>
     </div>
-    <div id="logout" style="display:none;">
-      <span id="user-email"></span>
-      <button onclick="signOut()">Log Out</button>
+
+    <!-- Auth Section -->
+    <div class="card" id="auth-section">
+      <div class="card-title">
+        <span class="icon purple">🔐</span>
+        Authentication
+      </div>
+
+      <div id="auth-buttons" class="button-group">
+        <button class="btn btn-primary" onclick="showSignUp()">Sign Up</button>
+        <button class="btn btn-secondary" onclick="showSignIn()">Sign In</button>
+      </div>
+
+      <div id="user-info" style="display: none;">
+        <p class="user-email"></p>
+        <button class="btn btn-danger" onclick="logOut()">Log Out</button>
+      </div>
     </div>
-  </div>
-  <div id="job-form" style="display:none;">
-    <h2>Add a Job</h2>
-    <input id="job-title" placeholder="Job Title" />
-    <input id="job-desc" placeholder="Job Description" />
-    <label><input type="checkbox" id="job-public" /> Make Public</label>
-    <button onclick="addJob()">Save Job</button>
-  </div>
-  <div id="jobs"></div>
 
-<script>
-  // Supabase credentials
-  const SUPABASE_URL = 'https://sembaaunjejulyjuztdoo.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlbWJhYW51ZWp1bHlqdXp0ZG9vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQwNTE1OTgsImV4cCI6MjA2OTYyNzU5OH0.A_bsJkcuiZx716Pj3fLX9tDutdVMHK39LYpUGxUZa6w';
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <!-- Add Job Section (hidden until logged in) -->
+    <div class="card" id="add-job-section" style="display: none;">
+      <div class="card-title">
+        <span class="icon green">➕</span>
+        Add a Job
+      </div>
 
-  async function signUp() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    let { error } = await supabase.auth.signUp({ email, password });
-    if (error) alert(error.message);
-    else alert('Check your email for confirmation!');
-  }
-
-  async function signIn() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    let { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) alert(error.message);
-    else loadSession();
-  }
-
-  async function signOut() {
-    await supabase.auth.signOut();
-    loadSession();
-  }
-
-  async function loadSession() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session && session.user) {
-      document.getElementById('login').style.display = 'none';
-      document.getElementById('logout').style.display = '';
-      document.getElementById('job-form').style.display = '';
-      document.getElementById('user-email').textContent = session.user.email;
-      loadJobs();
-    } else {
-      document.getElementById('login').style.display = '';
-      document.getElementById('logout').style.display = 'none';
-      document.getElementById('job-form').style.display = 'none';
-      document.getElementById('jobs').innerHTML = '';
-    }
-  }
-
-  async function addJob() {
-    const { data: { session } } = await supabase.auth.getSession();
-    const title = document.getElementById('job-title').value;
-    const description = document.getElementById('job-desc').value;
-    const isPublic = document.getElementById('job-public').checked;
-    if (!title) { alert('Title required'); return; }
-    await supabase
-      .from('jobs')
-      .insert([{ user_id: session.user.id, title, description, public: isPublic }]);
-    loadJobs();
-  }
-
-  async function loadJobs() {
-    const { data: { session } } = await supabase.auth.getSession();
-    let { data: jobs } = await supabase
-      .from('jobs')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .order('id', { ascending: false });
-    let html = '<h2>Your Jobs</h2>';
-    if (!jobs || jobs.length === 0) html += '<p>No jobs yet.</p>';
-    else jobs.forEach(job => {
-      html += `<div class="job">
-        <b>${job.title}</b><br>
-        ${job.description || ''}
-        <div>
-          <a class="share-link" href="?job=${job.id}" target="_blank">Share Link</a>
-          ${job.public ? '(Public)' : '(Private)'}
+      <form id="job-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Client</label>
+            <input type="text" name="client" placeholder="Client name" required>
+          </div>
+          <div class="form-group">
+            <label>Crop</label>
+            <input type="text" name="crop" placeholder="Crop type">
+          </div>
+          <div class="form-group">
+            <label>Aircraft</label>
+            <input type="text" name="aircraft" placeholder="Aircraft ID">
+          </div>
+          <div class="form-group">
+            <label>Hectares</label>
+            <input type="number" name="hectares" step="any" placeholder="Total ha">
+          </div>
         </div>
-      </div>`;
-    });
-    document.getElementById('jobs').innerHTML = html;
-  }
 
-  // On load, check for session and show job if ?job= in URL
-  window.onload = async function() {
-    loadSession();
-    // If shared job link
-    const params = new URLSearchParams(window.location.search);
-    if (params.has('job')) {
-      const jobId = params.get('job');
-      let { data: job } = await supabase
-        .from('jobs')
-        .select('*')
-        .eq('id', jobId)
-        .single();
-      if (job && job.public) {
-        document.body.innerHTML = `<h1>${job.title}</h1><p>${job.description}</p><p>Shared via Mixer Sheet</p>`;
+        <div class="checkbox-wrapper" style="margin-top: 15px;">
+          <input type="checkbox" id="makePublic" name="public">
+          <label for="makePublic">Make Public</label>
+        </div>
+
+        <div class="button-group">
+          <button type="submit" class="btn btn-success">Save Job</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Jobs List -->
+    <div class="card">
+      <div class="card-title">
+        <span class="icon orange">📋</span>
+        Saved Jobs
+      </div>
+
+      <div id="jobs-list" class="jobs-grid">
+        <p class="empty-state">Sign in to view and manage jobs</p>
+      </div>
+    </div>
+
+    <div class="nav-link">
+      <a href="index.html">← Back to Home</a>
+    </div>
+  </div>
+
+  <!-- Auth Modal -->
+  <div id="auth-modal" class="modal" style="display: none;">
+    <div class="modal-content card">
+      <span class="modal-close" onclick="closeModal()">&times;</span>
+      <h3 id="modal-title">Sign In</h3>
+
+      <form id="auth-form">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="auth-email" required placeholder="your@email.com">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="auth-password" required placeholder="Password">
+        </div>
+        <div class="button-group">
+          <button type="submit" class="btn btn-primary" id="auth-submit">Sign In</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Firebase config (placeholder - user should replace with their own)
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Initialize Firebase
+    try {
+      firebase.initializeApp(firebaseConfig);
+    } catch (e) {
+      console.log('Firebase not configured');
+    }
+
+    let isSignUp = false;
+
+    function showSignUp() {
+      isSignUp = true;
+      document.getElementById('modal-title').textContent = 'Sign Up';
+      document.getElementById('auth-submit').textContent = 'Sign Up';
+      document.getElementById('auth-modal').style.display = 'flex';
+    }
+
+    function showSignIn() {
+      isSignUp = false;
+      document.getElementById('modal-title').textContent = 'Sign In';
+      document.getElementById('auth-submit').textContent = 'Sign In';
+      document.getElementById('auth-modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('auth-modal').style.display = 'none';
+    }
+
+    document.getElementById('auth-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-password').value;
+
+      try {
+        if (isSignUp) {
+          await firebase.auth().createUserWithEmailAndPassword(email, password);
+        } else {
+          await firebase.auth().signInWithEmailAndPassword(email, password);
+        }
+        closeModal();
+      } catch (err) {
+        alert('❌ ' + err.message);
+      }
+    };
+
+    function logOut() {
+      firebase.auth().signOut();
+    }
+
+    // Auth state listener
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById('auth-buttons').style.display = 'none';
+        document.getElementById('user-info').style.display = 'block';
+        document.querySelector('.user-email').textContent = `Logged in as: ${user.email}`;
+        document.getElementById('add-job-section').style.display = 'block';
+        loadJobs();
+      } else {
+        document.getElementById('auth-buttons').style.display = 'flex';
+        document.getElementById('user-info').style.display = 'none';
+        document.getElementById('add-job-section').style.display = 'none';
+        document.getElementById('jobs-list').innerHTML = '<p class="empty-state">Sign in to view and manage jobs</p>';
+      }
+    });
+
+    // Load jobs from Firestore
+    async function loadJobs() {
+      const db = firebase.firestore();
+      const user = firebase.auth().currentUser;
+      if (!user) return;
+
+      const snapshot = await db.collection('jobs').where('userId', '==', user.uid).get();
+      const jobs = [];
+      snapshot.forEach(doc => jobs.push({ id: doc.id, ...doc.data() }));
+
+      const jobsList = document.getElementById('jobs-list');
+      if (jobs.length === 0) {
+        jobsList.innerHTML = '<p class="empty-state">No jobs yet. Add your first job above!</p>';
+      } else {
+        jobsList.innerHTML = jobs.map(job => `
+          <div class="job-card">
+            <div class="job-details">
+              <strong>${job.client}</strong>
+              <span>${job.crop || 'No crop'} • ${job.hectares || 0} ha</span>
+              <span>${job.aircraft || 'No aircraft'}</span>
+              ${job.public ? '<span class="badge">Public</span>' : ''}
+            </div>
+            <div class="job-actions">
+              <button class="btn btn-sm btn-primary" onclick="loadJobToMixer('${job.id}')">Load</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteCloudJob('${job.id}')">Delete</button>
+            </div>
+          </div>
+        `).join('');
       }
     }
-  }
-</script>
+
+    // Save job to Firestore
+    document.getElementById('job-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const user = firebase.auth().currentUser;
+      if (!user) return alert('Please sign in first');
+
+      const data = new FormData(e.target);
+      const job = {
+        client: data.get('client'),
+        crop: data.get('crop'),
+        aircraft: data.get('aircraft'),
+        hectares: parseFloat(data.get('hectares')) || 0,
+        public: data.get('public') === 'on',
+        userId: user.uid,
+        createdAt: new Date()
+      };
+
+      await firebase.firestore().collection('jobs').add(job);
+      e.target.reset();
+      loadJobs();
+      alert('✅ Job saved!');
+    };
+
+    async function deleteCloudJob(id) {
+      if (!confirm('Delete this job?')) return;
+      await firebase.firestore().collection('jobs').doc(id).delete();
+      loadJobs();
+    }
+
+    async function loadJobToMixer(id) {
+      const doc = await firebase.firestore().collection('jobs').doc(id).get();
+      const job = doc.data();
+      localStorage.setItem('mixerJob', JSON.stringify(job));
+      localStorage.setItem('mixerProducts', JSON.stringify([]));
+      window.location.href = 'setup.html';
+    }
+  </script>
 </body>
 </html>

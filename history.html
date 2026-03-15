@@ -1,59 +1,90 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Completed Jobs Archive</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    h1 { color: #0074b6; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background-color: #f2f2f2; }
-    button { padding: 4px 10px; }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Completed Jobs Archive</h1>
-  <table id="historyTable">
-    <thead>
-      <tr>
-        <th>Client</th>
-        <th>Aircraft</th>
-        <th>Order #</th>
-        <th>Export Date</th>
-        <th>PDF</th>
-        <th>Delete</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div class="container">
+    <div class="header">
+      <h1>Completed Jobs Archive</h1>
+      <p class="subtitle">Historical Records</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span class="icon purple">📚</span>
+        Archived Jobs
+      </div>
+
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Aircraft</th>
+              <th>Order #</th>
+              <th>Export Date</th>
+              <th>PDF</th>
+              <th>Delete</th>
+            </tr>
+          </thead>
+          <tbody id="history-table">
+            <!-- Rows populated by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <p id="empty-message" class="empty-state" style="display: none;">No completed jobs in archive</p>
+    </div>
+
+    <div class="nav-link">
+      <a href="index.html">← Back to Home</a>
+    </div>
+  </div>
 
   <script>
-    const tableBody = document.querySelector("#historyTable tbody");
-    const jobs = JSON.parse(localStorage.getItem("completedJobs") || "[]");
+    function loadHistory() {
+      const history = JSON.parse(localStorage.getItem('completedJobs') || '[]');
+      const tbody = document.getElementById('history-table');
+      const emptyMsg = document.getElementById('empty-message');
 
-    jobs.forEach((job, index) => {
-      const row = document.createElement("tr");
-      row.innerHTML = \`
-        <td>\${job.client}</td>
-        <td>\${job.aircraft}</td>
-        <td>\${job.orderNumber || 'N/A'}</td>
-        <td>\${job.date}</td>
-        <td><a href="\${job.pdf}" target="_blank">View PDF</a></td>
-        <td><button onclick="deleteJob(\${index})">Delete</button></td>
-      \`;
-      tableBody.appendChild(row);
-    });
-
-    function deleteJob(index) {
-      if (confirm("Delete this job from history?")) {
-        jobs.splice(index, 1);
-        localStorage.setItem("completedJobs", JSON.stringify(jobs));
-        location.reload();
+      if (history.length === 0) {
+        tbody.innerHTML = '';
+        emptyMsg.style.display = 'block';
+        return;
       }
+
+      emptyMsg.style.display = 'none';
+      tbody.innerHTML = history.map((job, index) => `
+        <tr>
+          <td><strong>${job.client || '—'}</strong></td>
+          <td>${job.aircraft || '—'}</td>
+          <td>${job.orderNumber || '—'}</td>
+          <td>${job.exportDate || '—'}</td>
+          <td>
+            ${job.pdfUrl ? `<a href="${job.pdfUrl}" target="_blank" class="btn btn-sm btn-primary">View</a>` : '—'}
+          </td>
+          <td>
+            <button class="btn btn-sm btn-danger" onclick="deleteHistoryItem(${index})">🗑️</button>
+          </td>
+        </tr>
+      `).join('');
     }
+
+    function deleteHistoryItem(index) {
+      if (!confirm('Delete this archive entry?')) return;
+
+      const history = JSON.parse(localStorage.getItem('completedJobs') || '[]');
+      history.splice(index, 1);
+      localStorage.setItem('completedJobs', JSON.stringify(history));
+      loadHistory();
+    }
+
+    document.addEventListener('DOMContentLoaded', loadHistory);
   </script>
 </body>
 </html>

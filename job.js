@@ -1,7 +1,6 @@
 window.onload = function () {
   const urlParams = new URLSearchParams(window.location.search);
   const aircraft = urlParams.get("aircraft");
-
   let job = null;
   let products = null;
 
@@ -16,90 +15,166 @@ window.onload = function () {
   }
 
   if (!job || !products || products.length === 0) {
-    alert("❌ No job or product found. Please import or set up a job first.");
+    alert("No job or product found. Please import or set up a job first.");
     window.location.href = "setup.html";
     return;
   }
 
+  // Calculate job metrics
   job.totalVolume = job.hectares * job.volPerHa;
   job.loadArea = job.hectares / job.loads;
   job.loadVolume = job.loadArea * job.volPerHa;
   job.loadTimes = job.loadTimes || [];
 
-  document.getElementById("client").textContent = job.client;
-  document.getElementById("crop").textContent = job.crop;
-  document.getElementById("pilot").textContent = job.pilot;
-  document.getElementById("aircraft").textContent = job.aircraft;
-  document.getElementById("hectares").textContent = job.hectares;
-  document.getElementById("volPerHa").textContent = job.volPerHa;
-  document.getElementById("totalVolume").textContent = Math.round(job.totalVolume);
-  document.getElementById("loadArea").textContent = job.loadArea.toFixed(1);
-  document.getElementById("loadVolume").textContent = Math.round(job.loadVolume);
-  document.getElementById("loads").textContent = job.loads;
+  // Populate summary
+  document.getElementById("client").textContent = job.client || '—';
+  document.getElementById("crop").textContent = job.crop || '—';
+  document.getElementById("pilot").textContent = job.pilot || '—';
+  document.getElementById("aircraft").textContent = job.aircraft || '—';
+  document.getElementById("hectares").textContent = job.hectares || 0;
+  document.getElementById("volPerHa").textContent = job.volPerHa || 0;
+  document.getElementById("totalVolume").textContent = Math.round(job.totalVolume) || 0;
+  document.getElementById("loadArea").textContent = job.loadArea?.toFixed(1) || 0;
+  document.getElementById("loadVolume").textContent = Math.round(job.loadVolume) || 0;
+  document.getElementById("loads").textContent = job.loads || 0;
 
   let currentLoad = 0;
+
+  // Master container state - only modified when "Add" is clicked
   window.containerState = products.map(p => [...p.containers].sort((a, b) => a - b));
+
   const productsDiv = document.getElementById("products");
 
   function updateProductRemaining() {
     const summary = document.getElementById("stock-summary");
-    if (summary) summary.remove();
-    const newSummary = document.createElement("div");
-    newSummary.id = "stock-summary";
-    newSummary.innerHTML = `<h4>Product Remaining</h4>` + products.map((p, i) => {
-      const total = containerState[i].reduce((a, b) => a + b, 0).toFixed(2);
-      return `<p><strong>${p.name}</strong>: ${total} ${p.unit}</p>`;
-    }).join("");
-    document.body.appendChild(newSummary);
+    summary.innerHTML = `
+      <div class="card-title">
+        <span class="icon orange">📦</span>
+        Product Remaining
+      </div>
+      <div class="jobs-grid">
+        ${products.map((p, i) => {
+          const total = window.containerState[i].reduce((a, b) => a + b, 0).toFixed(2);
+          return `
+            <div class="product-item">
+              <strong>${p.name}</strong>: ${total} ${p.unit}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }
+
+  // Calculate what would be used from containers WITHOUT modifying state
+  function calculateUsage(productIndex, amountNeeded) {
+    const containers = [...window.containerState[productIndex]]; // Copy, don't modify
+    let remaining = amountNeeded;
+    const usage = [];
+
+    for (let i = 0; i < containers.length && remaining > 0; i++) {
+      const available = containers[i];
+      if (available > 0) {
+        const used = Math.min(available, remaining);
+        remaining -= used;
+        const leftInContainer = available - used;
+        let line = `Container ${i + 1}: ${used.toFixed(2)} ${products[productIndex].unit}`;
+        if (leftInContainer > 0 && remaining === 0) {
+          line += ` (Remaining: ${leftInContainer.toFixed(2)} ${products[productIndex].unit})`;
+        }
+        usage.push({ containerIndex: i, used, line });
+      }
+    }
+
+    return usage;
+  }
+
+  // Actually deduct from containers - called when "Add" is clicked
+  function deductFromContainers(productIndex, amountNeeded) {
+    let remaining = amountNeeded;
+
+    for (let i = 0; i < window.containerState[productIndex].length && remaining > 0; i++) {
+      const available = window.containerState[productIndex][i];
+      if (available > 0) {
+        const used = Math.min(available, remaining);
+        window.containerState[productIndex][i] -= used;
+        remaining -= used;
+      }
+    }
+
+    // Update the display after deducting
+    updateProductRemaining();
   }
 
   function renderLoadBlock() {
     if (currentLoad >= job.loads) {
-      alert("✅ All loads complete");
+      const completeDiv = document.createElement("div");
+      completeDiv.className = "card";
+      completeDiv.innerHTML = `
+        <div style="text-align: center; padding: 30px;">
+          <div style="font-size: 4rem; margin-bottom: 15px;">✅</div>
+          <h2 style="color: #00b894;">All Loads Complete!</h2>
+          <p style="color: #636e72; margin-top: 10px;">Great work! All ${job.loads} loads have been mixed and loaded.</p>
+        </div>
+      `;
+      productsDiv.appendChild(completeDiv);
       return;
     }
 
     const loadDiv = document.createElement("div");
-    loadDiv.className = "load-block";
-    loadDiv.innerHTML = `<h3>Load ${currentLoad + 1} – Pilot: ${job.pilot} in ${job.aircraft}</h3>`;
+    loadDiv.className = "card load-block";
+    loadDiv.innerHTML = `<h3>Load ${currentLoad + 1} of ${job.loads} — Pilot: ${job.pilot} in ${job.aircraft}</h3>`;
+
     const allAdded = new Array(products.length).fill(false);
+    const productDeducted = new Array(products.length).fill(false); // Track if already deducted
 
     products.forEach((product, index) => {
       const totalPerLoad = product.rate * job.loadArea;
-      let remaining = totalPerLoad;
-      const fromContainers = [];
 
-      for (let i = 0; i < containerState[index].length && remaining > 0; i++) {
-        const available = containerState[index][i];
-        if (available > 0) {
-          const used = Math.min(available, remaining);
-          containerState[index][i] -= used;
-          remaining -= used;
-          let line = `Container ${i + 1}: ${used.toFixed(2)} ${product.unit}`;
-          if (containerState[index][i] > 0 && remaining === 0) {
-            line += ` (Remaining: ${containerState[index][i].toFixed(2)} ${product.unit})`;
-          }
-          fromContainers.push(line);
-        }
-      }
+      // Calculate usage WITHOUT modifying state
+      const usage = calculateUsage(index, totalPerLoad);
 
       const pDiv = document.createElement("div");
+      pDiv.className = "product-entry";
       pDiv.innerHTML = `
-        <p><strong>${product.name}</strong>: ${totalPerLoad.toFixed(2)} ${product.unit}</p>
-        <ul>${fromContainers.map(c => `<li>${c}</li>`).join("")}</ul>
-        <button class="add-btn">🧪 Add</button>
+        <strong style="color: #6c5ce7;">${product.name}</strong>: ${totalPerLoad.toFixed(2)} ${product.unit}
+        <ul style="margin: 10px 0; padding-left: 20px; color: #636e72;">
+          ${usage.map(u => `<li>${u.line}</li>`).join('')}
+        </ul>
+        <button class="btn btn-primary btn-sm add-btn">🧪 Add</button>
       `;
       loadDiv.appendChild(pDiv);
 
-      const button = pDiv.querySelector("button");
+      const button = pDiv.querySelector(".add-btn");
       button.onclick = () => {
         allAdded[index] = !allAdded[index];
+
         if (allAdded[index]) {
+          // Only deduct from containers when marked as added (and not already deducted)
+          if (!productDeducted[index]) {
+            deductFromContainers(index, totalPerLoad);
+            productDeducted[index] = true;
+          }
           button.textContent = "✅ Added";
-          button.style.background = "#28a745";
+          button.className = "btn btn-success btn-sm";
         } else {
+          // If unchecking, we need to add the product back
+          if (productDeducted[index]) {
+            // Add back to containers
+            let remaining = totalPerLoad;
+            for (let i = 0; i < window.containerState[index].length && remaining > 0; i++) {
+              // Find original capacity and add back what was taken
+              const originalContainer = products[index].containers.sort((a,b) => a-b)[i] || 0;
+              const currentAmount = window.containerState[index][i];
+              const spaceUsed = originalContainer - currentAmount;
+              const addBack = Math.min(spaceUsed, remaining);
+              window.containerState[index][i] += addBack;
+              remaining -= addBack;
+            }
+            productDeducted[index] = false;
+            updateProductRemaining();
+          }
           button.textContent = "🧪 Add";
-          button.style.background = "";
+          button.className = "btn btn-primary btn-sm";
         }
 
         const allConfirmed = allAdded.every(v => v);
@@ -108,20 +183,27 @@ window.onload = function () {
         if (allConfirmed && !existingLoadedBtn) {
           const loadedBtn = document.createElement("button");
           loadedBtn.textContent = "➕ Load Plane";
-          loadedBtn.className = "load-confirm";
+          loadedBtn.className = "btn btn-success load-confirm";
+          loadedBtn.style.width = "100%";
+          loadedBtn.style.marginTop = "15px";
           loadedBtn.onclick = () => {
             loadedBtn.disabled = true;
             loadedBtn.textContent = "✅ Loaded";
-            loadedBtn.style.background = "#28a745";
+            loadedBtn.style.opacity = "0.7";
+
             const ts = new Date().toLocaleString();
             const tsP = document.createElement("p");
-            tsP.textContent = `🕒 Loaded at ${ts}`;
+            tsP.style.marginTop = "10px";
+            tsP.style.color = "#00b894";
+            tsP.style.fontWeight = "500";
+            tsP.innerHTML = `🕒 Loaded at ${ts}`;
             loadDiv.appendChild(tsP);
+
             job.loadTimes.push(ts);
             localStorage.setItem("mixerJob", JSON.stringify(job));
+
             currentLoad++;
             renderLoadBlock();
-            updateProductRemaining();
           };
           loadDiv.appendChild(loadedBtn);
         }
@@ -139,52 +221,36 @@ window.onload = function () {
   updateProductRemaining();
 };
 
-window.addEventListener("DOMContentLoaded", () => {
-  const btnWrap = document.createElement("div");
-  btnWrap.style.margin = "30px 12px";
+// Navigation functions
+function editJob() {
+  const aircraft = new URLSearchParams(location.search).get("aircraft");
+  window.location.href = `setup.html?aircraft=${aircraft}`;
+}
 
-  const editJobBtn = document.createElement("button");
-  editJobBtn.textContent = "✏️ Edit Job";
-  editJobBtn.onclick = () => {
-    const aircraft = new URLSearchParams(location.search).get("aircraft");
-    window.location.href = `setup.html?aircraft=${aircraft}`;
-  };
-
-  const deleteJobBtn = document.createElement("button");
-  deleteJobBtn.textContent = "🗑️ Delete Job";
-  deleteJobBtn.onclick = () => {
-    const aircraft = new URLSearchParams(location.search).get("aircraft");
-    if (confirm("Are you sure you want to delete this job?")) {
-      localStorage.removeItem(`job_${aircraft}`);
-      localStorage.removeItem(`products_${aircraft}`);
-      localStorage.removeItem("mixerJob");
-      localStorage.removeItem("mixerProducts");
-      window.location.href = "setup.html";
-    }
-  };
-
-  const exportJobBtn = document.createElement("button");
-  exportJobBtn.textContent = "📤 Export Job";
-  exportJobBtn.onclick = exportJob;
-
-  btnWrap.appendChild(editJobBtn);
-  btnWrap.appendChild(deleteJobBtn);
-  btnWrap.appendChild(exportJobBtn);
-  document.body.appendChild(btnWrap);
-});
+function deleteJob() {
+  const aircraft = new URLSearchParams(location.search).get("aircraft");
+  if (confirm("Are you sure you want to delete this job?")) {
+    localStorage.removeItem(`job_${aircraft}`);
+    localStorage.removeItem(`products_${aircraft}`);
+    localStorage.removeItem("mixerJob");
+    localStorage.removeItem("mixerProducts");
+    window.location.href = "index.html";
+  }
+}
 
 async function exportJob() {
   const job = JSON.parse(localStorage.getItem("mixerJob"));
   const products = JSON.parse(localStorage.getItem("mixerProducts"));
+
   if (!job || !products || products.length === 0) {
-    alert("❌ No job or product data to export.");
+    alert("No job or product data to export.");
     return;
   }
 
   const mixer = prompt("Enter mixer name:");
   if (!mixer) return;
 
-  // Update product remaining
+  // Calculate product remaining
   const productRemaining = products.map((p, i) => ({
     name: p.name,
     remaining: window.containerState[i].reduce((a, b) => a + b, 0).toFixed(2),
@@ -200,11 +266,13 @@ async function exportJob() {
   doc.setFontSize(16);
   doc.text(`Mixer Sheet – Client: ${job.client}`, margin, y);
   y += 8;
+
   if (job.orderNumber) {
     doc.setFontSize(12);
     doc.text(`Work Order #: ${job.orderNumber}`, margin, y);
     y += 8;
   }
+
   doc.text(`Mixer: ${mixer}`, margin, y);
   y += 8;
 
@@ -215,9 +283,9 @@ async function exportJob() {
   y += 6;
   doc.text(`Crop: ${job.crop}`, margin, y);
   y += 6;
-  doc.text(`Area: ${job.hectares} ha  | Vol/Ha: ${job.volPerHa} L  | Total Vol: ${Math.round(job.totalVolume)} L`, margin, y);
+  doc.text(`Area: ${job.hectares} ha | Vol/Ha: ${job.volPerHa} L | Total Vol: ${Math.round(job.totalVolume)} L`, margin, y);
   y += 6;
-  doc.text(`Load Area: ${job.loadArea.toFixed(1)} ha  | Load Vol: ${Math.round(job.loadVolume)} L  | Loads: ${job.loads}`, margin, y);
+  doc.text(`Load Area: ${job.loadArea.toFixed(1)} ha | Load Vol: ${Math.round(job.loadVolume)} L | Loads: ${job.loads}`, margin, y);
   y += 10;
 
   doc.text("Chemicals:", margin, y);
@@ -247,36 +315,16 @@ async function exportJob() {
   const filename = `${job.client}_${job.orderNumber || 'order'}_${job.aircraft}_mixer_sheet.pdf`;
   doc.save(filename);
 
-  // Upload to Dropbox
-  const blob = doc.output("blob");
-  const dbToken = "sl.u.AF2-iH-EzMMnqWA_PW9sW5Q-dy-yjv5rc2XF9LpVLy4knFIleV3qk5cPBoW1ADZX9aG2cYmQ91CKqnPxOV_-uQzO9l6fjZg__hcaVhjMmKDAcaXrqLapQNNkjmidza7RPvV9QOQhbmjFkbezYPAdUtrMeqt6lYz-q10uyXqGx92b5jIA-14ftg_QMqxEz1ih7uNHr-vRuijENQP4bGwC1U9piuFsA4JFiQcBW8Xdz7YEpc5dhJ--9rsoFwITq3VPRbCz5ycHIlqcJxlhn4jbIsqRiA24QtMVnmNpeC8Rtf75FOITCcB5yHR1tZ7Mw3_K1drAA2UV0oHIQ7acv9uI7vdUOnnYDMA69br1nbiv6qh7sZEeeChDdWy7VP-PRwSJhLrjADLbrYFegoAsQvnwUpfBtnFhpoD97nDahsGrJ89K11aaKTAOE5yfIuORTDU-fyhpWDONuMt56AcQtNe-h2B7arkiHoXXTbYcx4C06vY944a8YyOsYRPigLvW3wodULYNWK8RrFe4YnlyiSgR1w_YqchV0I_BpzwIdXQiYMeEfvXnUjC5isGbL6ikVfVCZ8Vo7EA9pQzivL89kT9NgF5tVU-1QJ2QsfrTv1LJ1ad3F5aAKeMFNMFzefboPFzy5EVMFcB555zQLl5lvybcPozdO1cOylo5rZTkbjDUZDe2oId3eY0oUhY1DyhLTsf8eERvfqubj5J8bi8eLq64-hsOGViNrrHllE7LjaPdvLbHKPX2eL3MsRV3jGdCXEnrNdomnLYsVzWa2Y8VjrdtHXtpupTQ9O3iuQlqNqiMeOcbo7nMKJTjFxIJltXqbiAqhe7huUDfT4vAz1KFlI3IltdZA4oIEV651wt2LaZN5N_shyjthVdEEFahiZdt5E-k49G5C6t5c8MTbTXOt5sBVNy-traDyg1GedcqDQDKArSe0f9UYakxM0njneaMqAtsyi5czyQ4WGIs5BDq2hRczI0f_kVaYa-WSeKvIa6EKyM9O3nVxMW1VesvYF3EHCXS0zujs4SL4PAmfJyZkzKlefGqxpz6djuejomRMrR72WOIiJ9ZHu-Uryr4rGuLXjhdPunT0fOUcaXsVi27V1mmTCeGc8KEl-hKW6q-cxXcSS2l8EUuo8XGl1NlKt20llUv7nVaTO3NqZ7buN_wemibc0FVQiZ7dsJy11Ja-ZlxNxkUaYK-4yYKMjrmdN6Jz8lPivQ5ZLP75YhAS7mrOWxyToFlqFtT1PVdgWKzjmRqgdimMpfgaUDNH0wUZloySjjIE52PfkLeLQS43UVHFwfTtU4R7KlcbgPS3ct9qCt_fBxUYTYvSE6LwNS_PlVnv4WIUZYlcBvCkGh7erGx4tmn1BqM0gW038oslISTV7hitH3Pdt_vVugXSGKWKUZLL6CwsgFOvzZrs85_liof2kYz0aG1tg5uu0iuFFaVotgOUS8Lp9qisiEMrNbrZT2iJilqsMg";  
-  const path = `/${filename}`;
-  await fetch("https://content.dropboxapi.com/2/files/upload", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${dbToken}`,
-      "Dropbox-API-Arg": JSON.stringify({ path, mode: "add", autorename: true }),
-      "Content-Type": "application/octet-stream"
-    },
-    body: blob
+  // Save to history
+  const history = JSON.parse(localStorage.getItem('completedJobs') || '[]');
+  history.push({
+    client: job.client,
+    aircraft: job.aircraft,
+    orderNumber: job.orderNumber,
+    exportDate: new Date().toLocaleString(),
+    mixer: mixer
   });
+  localStorage.setItem('completedJobs', JSON.stringify(history));
 
-  const jsonBlob = new Blob(
-    [JSON.stringify({ job: { ...job, mixer }, products }, null, 2)],
-    { type: "application/json" }
-  );
-
-  await fetch("https://content.dropboxapi.com/2/files/upload", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${dbToken}`,
-      "Dropbox-API-Arg": JSON.stringify({ path: `/${filename.replace(".pdf", ".json")}`, mode: "add", autorename: true }),
-      "Content-Type": "application/octet-stream"
-    },
-    body: jsonBlob
-  });
-
-  alert("✅ Job exported and uploaded to Dropbox.");
+  alert("✅ Job exported successfully! PDF downloaded.");
 }
-
-
