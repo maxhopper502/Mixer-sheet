@@ -1,155 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>Mixer Setup</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Mixer Job Setup</h1>
-    </div>
 
-    <!-- Job Details Card -->
-    <div class="card">
-      <div class="card-title">
-        <span class="icon purple">📋</span>
-        Job Details
+<div class="app-header">
+  <h1>✈️ Mixer Sheet</h1>
+  <p>Job Setup</p>
+</div>
+
+<div class="container">
+
+  <!-- Copy from existing job (shown when ?copyClient= is in URL) -->
+  <div class="card" id="copy-banner" style="display:none;border-color:#6c5ce7">
+    <div class="card-title">🔗 Adding Aircraft to Existing Job</div>
+    <p style="font-size:0.85rem;color:var(--muted)">Client and order details have been pre-filled. Just enter the new aircraft registration and pilot, then add products.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 Job Details</div>
+
+    <form id="job-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Client</label>
+          <input type="text" name="client" required placeholder="Client name" />
+        </div>
+        <div class="form-group">
+          <label>Crop</label>
+          <input type="text" name="crop" placeholder="Wheat, Canola…" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Pilot</label>
+          <input type="text" name="pilot" placeholder="Pilot name" />
+        </div>
+        <div class="form-group">
+          <label>Aircraft Reg.</label>
+          <input type="text" name="aircraft" placeholder="VH-ODX" required />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Total Hectares</label>
+          <input type="number" name="hectares" inputmode="decimal" placeholder="0" required />
+        </div>
+        <div class="form-group">
+          <label>Vol / Ha (L)</label>
+          <input type="number" name="volPerHa" inputmode="decimal" placeholder="0" required />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Number of Loads</label>
+          <input type="number" name="loads" inputmode="numeric" placeholder="0" required />
+        </div>
+        <div class="form-group">
+          <label>Order Number</label>
+          <input type="text" name="orderNumber" placeholder="Optional" />
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Add product -->
+  <div class="card">
+    <div class="card-title">🧪 Add Product</div>
+
+    <form id="product-form">
+      <div class="checkbox-row">
+        <input type="checkbox" id="useAll" onchange="autoCalcRate()" />
+        <label for="useAll">Auto-calculate rate from supplied quantity</label>
       </div>
 
-      <div class="import-section" style="margin-bottom: 20px;">
-        <input type="file" id="importFile" accept=".json">
-        <p class="import-hint">Import existing job (JSON)</p>
+      <div class="form-group">
+        <label>Product Name</label>
+        <input type="text" name="name" required placeholder="e.g. Glyphosate" />
       </div>
 
-      <form id="job-form">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Client</label>
-            <input type="text" name="client" placeholder="Enter client name">
-          </div>
-          <div class="form-group">
-            <label>Crop</label>
-            <input type="text" name="crop" placeholder="Enter crop type">
-          </div>
-          <div class="form-group">
-            <label>Pilot</label>
-            <input type="text" name="pilot" placeholder="Enter pilot name">
-          </div>
-          <div class="form-group">
-            <label>Aircraft</label>
-            <input type="text" name="aircraft" placeholder="Aircraft ID">
-          </div>
-          <div class="form-group">
-            <label>Hectares</label>
-            <input type="number" name="hectares" step="any" placeholder="Total hectares">
-          </div>
-          <div class="form-group">
-            <label>Vol/Ha</label>
-            <input type="number" name="volPerHa" step="any" placeholder="Volume per hectare">
-          </div>
-          <div class="form-group">
-            <label>Loads</label>
-            <input type="number" name="loads" placeholder="Number of loads">
-          </div>
-          <div class="form-group">
-            <label>Order Number</label>
-            <input type="text" name="orderNumber" placeholder="Order #">
-          </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Rate per Ha</label>
+          <input type="number" id="rateField" name="rate" inputmode="decimal" placeholder="0" step="any" required />
         </div>
-      </form>
-    </div>
-
-    <hr>
-
-    <!-- Add Product Card -->
-    <div class="card">
-      <div class="card-title">
-        <span class="icon orange">🧪</span>
-        Add Product
+        <div class="form-group">
+          <label>Unit</label>
+          <select name="unit">
+            <option value="Litres">Litres</option>
+            <option value="Kilograms">Kilograms</option>
+          </select>
+        </div>
       </div>
 
-      <form id="product-form">
-        <div class="checkbox-wrapper">
-          <input type="checkbox" id="useAll" onchange="autoCalcRate()">
-          <label for="useAll">Use all supplied quantity</label>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Container Size 1</label>
+          <input type="number" name="container1" inputmode="decimal" placeholder="e.g. 20" step="any" />
         </div>
-
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Product Name</label>
-            <input type="text" name="name" placeholder="Enter product name" required>
-          </div>
-          <div class="form-group">
-            <label>Rate per Ha</label>
-            <input type="number" name="rate" id="rateField" step="any" placeholder="Rate" required>
-          </div>
-          <div class="form-group">
-            <label>Unit</label>
-            <div class="unit-toggle">
-              <input type="radio" name="unit" value="Litres" id="unit-litres" checked>
-              <label for="unit-litres">Litres</label>
-              <input type="radio" name="unit" value="Kilograms" id="unit-kg">
-              <label for="unit-kg">Kilograms</label>
-            </div>
-          </div>
+        <div class="form-group">
+          <label>Count</label>
+          <input type="number" name="count1" inputmode="numeric" placeholder="0" />
         </div>
-
-        <div class="form-grid" style="margin-top: 15px;">
-          <div class="container-row">
-            <div class="form-group">
-              <label>Container Size 1</label>
-              <input type="number" name="container1" step="any" placeholder="Size">
-            </div>
-            <div class="form-group">
-              <label>Count</label>
-              <input type="number" name="count1" placeholder="Qty">
-            </div>
-          </div>
-          <div class="container-row">
-            <div class="form-group">
-              <label>Container Size 2</label>
-              <input type="number" name="container2" step="any" placeholder="Size">
-            </div>
-            <div class="form-group">
-              <label>Count</label>
-              <input type="number" name="count2" placeholder="Qty">
-            </div>
-          </div>
-        </div>
-
-        <span id="autoRate"></span>
-
-        <div class="button-group">
-          <button type="submit" class="btn btn-primary">🧪 Add Product</button>
-        </div>
-      </form>
-    </div>
-
-    <!-- Product List Card -->
-    <div class="card">
-      <div class="card-title">
-        <span class="icon green">📦</span>
-        Products Added
       </div>
-      <div id="product-list"></div>
-    </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Container Size 2</label>
+          <input type="number" name="container2" inputmode="decimal" placeholder="e.g. 5" step="any" />
+        </div>
+        <div class="form-group">
+          <label>Count</label>
+          <input type="number" name="count2" inputmode="numeric" placeholder="0" />
+        </div>
+      </div>
 
-    <!-- Start Mixing Button -->
-    <div class="button-group centered" style="margin-top: 30px;">
-      <button type="button" class="btn btn-success" onclick="startJob()" style="font-size: 1.2rem; padding: 18px 40px;">
-        ▶️ Start Mixing
-      </button>
-    </div>
+      <p id="autoRate" style="font-size:0.8rem;color:var(--green);min-height:18px;margin-bottom:8px"></p>
 
-    <div class="nav-link">
-      <a href="index.html">← Back to Home</a>
+      <button type="submit" class="btn btn-blue btn-block">🧪 Add Product</button>
+    </form>
+  </div>
+
+  <!-- Products added -->
+  <div class="card">
+    <div class="card-title">📦 Products Added</div>
+    <div id="product-list">
+      <div class="empty-state" style="padding:16px 0">
+        <p>No products added yet.</p>
+      </div>
     </div>
   </div>
 
-  <script src="setup.js"></script>
+  <button onclick="startJob()" class="btn btn-green btn-block" style="font-size:1.05rem;padding:14px">▶️ Start Mixing</button>
+  <br/>
+  <a href="index.html" class="btn btn-ghost btn-block">← Back to Home</a>
+
+</div>
+
+<div class="app-footer">Mixer Sheet v3.0</div>
+<script src="setup.js"></script>
 </body>
 </html>

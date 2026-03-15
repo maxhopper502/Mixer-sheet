@@ -1,88 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>Mixer Job</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Mixer Job</h1>
+<div class="app-header">
+  <h1>✈️ Mixer Sheet</h1>
+  <p id="header-sub">Active Job</p>
+</div>
+<div class="container">
+  <div id="switch-bar" class="switch-bar" style="display:none">
+    <span class="switch-bar-label">✈️ Switch Aircraft:</span>
+    <div class="switch-pills" id="switch-pills"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📋 Job Summary</div>
+    <div class="summary-grid">
+      <div class="summary-item"><div class="s-label">Client</div><div class="s-value" id="client">—</div></div>
+      <div class="summary-item"><div class="s-label">Aircraft</div><div class="s-value" id="aircraft">—</div></div>
+      <div class="summary-item"><div class="s-label">Pilot</div><div class="s-value" id="pilot">—</div></div>
+      <div class="summary-item"><div class="s-label">Crop</div><div class="s-value" id="crop">—</div></div>
+      <div class="summary-item"><div class="s-label">Total Area</div><div class="s-value"><span id="hectares">—</span> ha</div></div>
+      <div class="summary-item"><div class="s-label">Vol / Ha</div><div class="s-value"><span id="volPerHa">—</span> L</div></div>
+      <div class="summary-item"><div class="s-label">Load Area</div><div class="s-value"><span id="loadArea">—</span> ha</div></div>
+      <div class="summary-item"><div class="s-label">Load Volume</div><div class="s-value"><span id="loadVolume">—</span> L</div></div>
+      <div class="summary-item"><div class="s-label">Total Volume</div><div class="s-value"><span id="totalVolume">—</span> L</div></div>
+      <div class="summary-item"><div class="s-label">Loads</div><div class="s-value" id="loads">—</div></div>
     </div>
-
-    <!-- Job Summary Card -->
-    <div class="card job-summary-card">
-      <div class="job-summary-grid">
-        <div class="summary-item">
-          <span class="summary-label">Client</span>
-          <span class="summary-value" id="client">—</span>
-        </div>
-        <div class="summary-item">
-          <span class="summary-label">Aircraft</span>
-          <span class="summary-value highlight" id="aircraft">—</span>
-        </div>
-        <div class="summary-item">
-          <span class="summary-label">Pilot</span>
-          <span class="summary-value" id="pilot">—</span>
-        </div>
-        <div class="summary-item">
-          <span class="summary-label">Crop</span>
-          <span class="summary-value" id="crop">—</span>
-        </div>
-        <div class="summary-item">
-          <span class="summary-label">Total Area</span>
-          <span class="summary-value"><span id="hectares">—</span> ha</span>
-        </div>
-        <div class="summary-item">
-          <span class="summary-label">Vol/Ha</span>
-          <span class="summary-value"><span id="volPerHa">—</span> L</span>
-        </div>
-      </div>
-
-      <hr>
-
-      <div class="job-summary-grid">
-        <div class="summary-item accent">
-          <span class="summary-label">Load Area</span>
-          <span class="summary-value"><span id="loadArea">—</span> ha</span>
-        </div>
-        <div class="summary-item accent">
-          <span class="summary-label">Load Volume</span>
-          <span class="summary-value"><span id="loadVolume">—</span> L</span>
-        </div>
-        <div class="summary-item accent">
-          <span class="summary-label">Total Volume</span>
-          <span class="summary-value"><span id="totalVolume">—</span> L</span>
-        </div>
-        <div class="summary-item accent highlight-box">
-          <span class="summary-label">Loads</span>
-          <span class="summary-value big" id="loads">—</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Products/Loads Section -->
-    <div id="products"></div>
-
-    <!-- Product Remaining Summary -->
-    <div id="stock-summary" class="card"></div>
-
-    <!-- Action Buttons -->
-    <div class="button-group centered" id="action-buttons">
-      <button class="btn btn-warning" onclick="editJob()">✏️ Edit Job</button>
-      <button class="btn btn-danger" onclick="deleteJob()">🗑️ Delete Job</button>
-      <button class="btn btn-success" onclick="exportJob()">📤 Export Job</button>
-    </div>
-
-    <div class="nav-link">
-      <a href="index.html">← Back to Home</a>
+    <div style="margin-top:12px">
+      <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="progress-label" id="progress-label">0 of 0 loads complete</div>
     </div>
   </div>
-
-  <script src="job.js"></script>
+  <div class="card">
+    <div class="card-title">📦 Product Remaining</div>
+    <div id="stock-summary" class="stock-summary"></div>
+  </div>
+  <div id="products"></div>
+  <div class="card">
+    <div class="card-title">⚙️ Actions</div>
+    <div class="btn-group">
+      <button class="btn btn-ghost btn-sm" onclick="editJob()">✏️ Edit Job</button>
+      <button class="btn btn-blue btn-sm" onclick="exportJob()">📤 Export PDF</button>
+      <button class="btn btn-red btn-sm" onclick="deleteJob()">🗑️ Delete Job</button>
+    </div>
+    <a href="index.html" class="btn btn-ghost btn-block" style="margin-top:10px">← Back to Home</a>
+  </div>
+</div>
+<div class="app-footer">Mixer Sheet v3.0</div>
+<script src="job.js"></script>
 </body>
 </html>

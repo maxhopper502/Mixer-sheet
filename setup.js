@@ -1,198 +1,169 @@
+// ── setup.js ─────────────────────────────────────────────────────────────────
+
 function autoCalcRate() {
-  const ha = parseFloat(document.getElementById("job-form").elements["hectares"].value);
+  const ha = parseFloat(document.getElementById('job-form').elements['hectares'].value);
   if (!ha || ha <= 0) {
-    alert("Please enter total hectares first.");
-    document.getElementById("useAll").checked = false;
+    alert('Please enter total hectares first.');
+    document.getElementById('useAll').checked = false;
     return;
   }
-  const size1 = parseFloat(document.getElementById("product-form").elements["container1"].value);
-  const count1 = parseInt(document.getElementById("product-form").elements["count1"].value);
-  const size2 = parseFloat(document.getElementById("product-form").elements["container2"].value);
-  const count2 = parseInt(document.getElementById("product-form").elements["count2"].value);
-  const totalSupplied =
-    (isNaN(size1) || isNaN(count1) ? 0 : size1 * count1) +
-    (isNaN(size2) || isNaN(count2) ? 0 : size2 * count2);
-  const rate = totalSupplied / ha;
-  document.getElementById("rateField").value = rate.toFixed(3);
-  document.getElementById("autoRate").textContent = `Auto Rate: ${rate.toFixed(3)} per ha`;
+  const size1  = parseFloat(document.getElementById('product-form').elements['container1'].value);
+  const count1 = parseInt(document.getElementById('product-form').elements['count1'].value);
+  const size2  = parseFloat(document.getElementById('product-form').elements['container2'].value);
+  const count2 = parseInt(document.getElementById('product-form').elements['count2'].value);
+  const total  = (isNaN(size1)||isNaN(count1) ? 0 : size1*count1)
+               + (isNaN(size2)||isNaN(count2) ? 0 : size2*count2);
+  const rate = total / ha;
+  document.getElementById('rateField').value = rate.toFixed(3);
+  document.getElementById('autoRate').textContent = `Auto Rate: ${rate.toFixed(3)} per ha`;
 }
 
 let products = [];
 let editIndex = null;
 
-document.getElementById("product-form").onsubmit = e => {
+document.getElementById('product-form').onsubmit = e => {
   e.preventDefault();
   const data = new FormData(e.target);
   const containers = [];
-  const size1 = parseFloat(data.get("container1"));
-  const count1 = parseInt(data.get("count1"));
-  if (!isNaN(size1) && count1 > 0) {
-    for (let i = 0; i < count1; i++) containers.push(size1);
-  }
-  const size2 = parseFloat(data.get("container2"));
-  const count2 = parseInt(data.get("count2"));
-  if (!isNaN(size2) && count2 > 0) {
-    for (let i = 0; i < count2; i++) containers.push(size2);
-  }
+  const s1 = parseFloat(data.get('container1')), c1 = parseInt(data.get('count1'));
+  if (!isNaN(s1) && c1 > 0) for (let i = 0; i < c1; i++) containers.push(s1);
+  const s2 = parseFloat(data.get('container2')), c2 = parseInt(data.get('count2'));
+  if (!isNaN(s2) && c2 > 0) for (let i = 0; i < c2; i++) containers.push(s2);
+
   const updated = {
-    name: data.get("name"),
-    rate: parseFloat(data.get("rate")),
-    unit: data.get("unit"),
+    name:       data.get('name'),
+    rate:       parseFloat(data.get('rate')),
+    unit:       data.get('unit'),
     containers
   };
-  if (editIndex !== null) {
-    products[editIndex] = updated;
-    editIndex = null;
-  } else {
-    products.push(updated);
-  }
-  const aircraft = (document.getElementById("job-form").elements["aircraft"].value || "").trim().toUpperCase();
+
+  if (editIndex !== null) { products[editIndex] = updated; editIndex = null; }
+  else products.push(updated);
+
+  const aircraft = (document.getElementById('job-form').elements['aircraft'].value || '').trim().toUpperCase();
   localStorage.setItem(`products_${aircraft}`, JSON.stringify(products));
-  localStorage.setItem("mixerProducts", JSON.stringify(products));
+
   e.target.reset();
-  document.getElementById("autoRate").textContent = "";
+  document.getElementById('autoRate').textContent = '';
+  document.getElementById('useAll').checked = false;
   updateProductList();
 };
 
 function updateProductList() {
-  const ha = parseFloat(new FormData(document.getElementById("job-form")).get("hectares") || 0);
-  const list = document.getElementById("product-list");
+  const ha   = parseFloat(new FormData(document.getElementById('job-form')).get('hectares') || 0);
+  const list = document.getElementById('product-list');
   if (products.length === 0) {
-    list.innerHTML = '<p style="color: #636e72; text-align: center; padding: 20px;">No products added yet. Add your first product above! 👆</p>';
+    list.innerHTML = '<div class="empty-state" style="padding:16px 0"><p>No products added yet.</p></div>';
     return;
   }
   list.innerHTML = products.map((p, i) => {
-    const required = +(p.rate * ha).toFixed(3);
+    const required  = +(p.rate * ha).toFixed(3);
     const available = +p.containers.reduce((a,b)=>a+b,0).toFixed(3);
-    const diff = +(available - required).toFixed(3);
-    const ok = diff >= 0;
+    const diff      = +(available - required).toFixed(3);
+    const ok        = diff >= 0;
     return `<div class="product-item">
-      <strong>${p.name}</strong> @ ${p.rate.toFixed(3)} ${p.unit}/ha<br/>
-      Required: ${required} ${p.unit}<br/>
-      Supplied: ${available} ${p.unit}<br/>
-      Difference: ${diff} ${p.unit} ${ok ? "✅" : "⚠️"}<br/>
-      <button class="btn btn-warning" onclick="loadProduct(${i})">✏️ Edit</button>
-      <button class="btn btn-primary" onclick="deleteProduct(${i})">🗑 Delete</button>
+      <div class="product-item-name">${p.name}</div>
+      <div class="product-item-detail">Rate: ${p.rate.toFixed(3)} ${p.unit}/ha</div>
+      <div class="product-item-detail">Required: ${required} ${p.unit}</div>
+      <div class="product-item-detail">Supplied: ${available} ${p.unit}</div>
+      <div class="product-item-detail ${ok ? 'product-item-diff-ok' : 'product-item-diff-low'}">
+        Difference: ${diff > 0 ? '+' : ''}${diff} ${p.unit} ${ok ? '✅' : '⚠️'}
+      </div>
+      <div class="product-actions">
+        <button class="btn btn-ghost btn-sm" onclick="loadProduct(${i})">✏️ Edit</button>
+        <button class="btn btn-red btn-sm" onclick="deleteProduct(${i})">🗑 Delete</button>
+      </div>
     </div>`;
-  }).join("");
+  }).join('');
 }
 
 function loadProduct(index) {
-  const p = products[index];
-  const form = document.getElementById("product-form");
-  form.name.value = p.name;
-  form.rate.value = p.rate;
-  form.unit.value = p.unit;
-  const grouped = p.containers.reduce((acc, size) => {
-    acc[size] = (acc[size] || 0) + 1;
-    return acc;
-  }, {});
-  const sizes = Object.entries(grouped);
-  if (sizes[0]) {
-    form.container1.value = sizes[0][0];
-    form.count1.value = sizes[0][1];
-  }
-  if (sizes[1]) {
-    form.container2.value = sizes[1][0];
-    form.count2.value = sizes[1][1];
-  }
+  const p    = products[index];
+  const form = document.getElementById('product-form');
+  form.name.value      = p.name;
+  form.rate.value      = p.rate;
+  form.unit.value      = p.unit;
+  const grouped = p.containers.reduce((acc, size) => { acc[size] = (acc[size]||0)+1; return acc; }, {});
+  const sizes   = Object.entries(grouped);
+  if (sizes[0]) { form.container1.value = sizes[0][0]; form.count1.value = sizes[0][1]; }
+  if (sizes[1]) { form.container2.value = sizes[1][0]; form.count2.value = sizes[1][1]; }
   editIndex = index;
 }
 
 function deleteProduct(index) {
   products.splice(index, 1);
-  const aircraft = (document.getElementById("job-form").elements["aircraft"].value || "").trim().toUpperCase();
+  const aircraft = (document.getElementById('job-form').elements['aircraft'].value || '').trim().toUpperCase();
   localStorage.setItem(`products_${aircraft}`, JSON.stringify(products));
-  localStorage.setItem("mixerProducts", JSON.stringify(products));
   updateProductList();
 }
 
 function startJob() {
-  const f = new FormData(document.getElementById("job-form"));
+  const f = new FormData(document.getElementById('job-form'));
   const job = {
-    client: f.get("client"),
-    crop: f.get("crop"),
-    hectares: parseFloat(f.get("hectares")),
-    loads: parseInt(f.get("loads")),
-    volPerHa: parseFloat(f.get("volPerHa")),
-    pilot: f.get("pilot"),
-    aircraft: f.get("aircraft").trim().toUpperCase(),
-    orderNumber: f.get("orderNumber")
+    client:      f.get('client'),
+    crop:        f.get('crop'),
+    hectares:    parseFloat(f.get('hectares')),
+    loads:       parseInt(f.get('loads')),
+    volPerHa:    parseFloat(f.get('volPerHa')),
+    pilot:       f.get('pilot'),
+    aircraft:    f.get('aircraft').trim().toUpperCase(),
+    orderNumber: f.get('orderNumber')
   };
-  localStorage.removeItem(`job_${job.aircraft}`);
-  localStorage.removeItem(`products_${job.aircraft}`);
-  localStorage.setItem(`job_${job.aircraft}`, JSON.stringify(job));
+  if (!job.client || !job.aircraft || !job.hectares || !job.loads) {
+    alert('Please fill in Client, Aircraft, Hectares and Loads.');
+    return;
+  }
+  if (products.length === 0) {
+    alert('Please add at least one product.');
+    return;
+  }
+  // Clear any old progress for this aircraft if it's a fresh setup
+  const existing = localStorage.getItem(`job_${job.aircraft}`);
+  if (!existing) localStorage.removeItem(`progress_${job.aircraft}`);
+
+  localStorage.setItem(`job_${job.aircraft}`,      JSON.stringify(job));
   localStorage.setItem(`products_${job.aircraft}`, JSON.stringify(products));
-  localStorage.setItem("mixerJob", JSON.stringify(job));
-  localStorage.setItem("mixerProducts", JSON.stringify(products));
-  window.location.href = `job.html?aircraft=${job.aircraft}`;
+  window.location.href = `job.html?aircraft=${encodeURIComponent(job.aircraft)}`;
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const params = new URLSearchParams(window.location.search);
-  const aircraft = params.get("aircraft");
-  let job = aircraft
-    ? JSON.parse(localStorage.getItem(`job_${aircraft}`))
-    : JSON.parse(localStorage.getItem("mixerJob"));
-  if (job) {
-    const f = document.getElementById("job-form");
-    f.elements["client"].value = job.client || "";
-    f.elements["crop"].value = job.crop || "";
-    f.elements["pilot"].value = job.pilot || "";
-    f.elements["aircraft"].value = job.aircraft || "";
-    f.elements["hectares"].value = job.hectares || "";
-    f.elements["volPerHa"].value = job.volPerHa || "";
-    f.elements["loads"].value = job.loads || "";
-    f.elements["orderNumber"].value = job.orderNumber || "";
-  }
-  let saved = aircraft
-    ? JSON.parse(localStorage.getItem(`products_${aircraft}`))
-    : JSON.parse(localStorage.getItem("mixerProducts"));
-  if (saved && Array.isArray(saved)) {
-    products = saved;
-  }
-  updateProductList();
-});
+// ── Initialise on DOMContentLoaded ───────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const params   = new URLSearchParams(window.location.search);
+  const aircraft = params.get('aircraft');
+  const copyClient = params.get('copyClient');
+  const copyOrder  = params.get('copyOrder');
 
-// Recalculate if 'use all' is checked and containers change
-document.addEventListener("DOMContentLoaded", () => {
-  ["container1", "count1", "container2", "count2"].forEach(id => {
-    document.getElementById("product-form").elements[id].addEventListener("input", () => {
-      if (document.getElementById("useAll").checked) autoCalcRate();
+  // Editing existing job
+  if (aircraft) {
+    const job = JSON.parse(localStorage.getItem(`job_${aircraft}`));
+    if (job) {
+      const f = document.getElementById('job-form');
+      f.elements['client'].value      = job.client      || '';
+      f.elements['crop'].value        = job.crop        || '';
+      f.elements['pilot'].value       = job.pilot       || '';
+      f.elements['aircraft'].value    = job.aircraft    || '';
+      f.elements['hectares'].value    = job.hectares    || '';
+      f.elements['volPerHa'].value    = job.volPerHa    || '';
+      f.elements['loads'].value       = job.loads       || '';
+      f.elements['orderNumber'].value = job.orderNumber || '';
+    }
+    const saved = JSON.parse(localStorage.getItem(`products_${aircraft}`));
+    if (saved && Array.isArray(saved)) products = saved;
+
+  // Adding aircraft to existing job (copying client/order)
+  } else if (copyClient) {
+    const f = document.getElementById('job-form');
+    f.elements['client'].value      = decodeURIComponent(copyClient);
+    f.elements['orderNumber'].value = decodeURIComponent(copyOrder || '');
+    document.getElementById('copy-banner').style.display = '';
+  }
+
+  updateProductList();
+
+  // Auto-recalculate rate when container inputs change
+  ['container1','count1','container2','count2'].forEach(id => {
+    document.getElementById('product-form').elements[id]?.addEventListener('input', () => {
+      if (document.getElementById('useAll').checked) autoCalcRate();
     });
   });
-});
-
-// Import job from JSON file
-document.getElementById("importFile").addEventListener("change", function(evt) {
-  const file = evt.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const data = JSON.parse(e.target.result);
-      const job = data.job || data;
-      const importedProducts = data.products;
-      if (!job.client || !job.hectares || !importedProducts) throw "Invalid file format";
-      const f = document.getElementById("job-form");
-      f.elements["client"].value = job.client || "";
-      f.elements["crop"].value = job.crop || "";
-      f.elements["pilot"].value = job.pilot || "";
-      f.elements["aircraft"].value = job.aircraft || "";
-      f.elements["hectares"].value = job.hectares || "";
-      f.elements["volPerHa"].value = job.volPerHa || "";
-      f.elements["loads"].value = job.loads || "";
-      f.elements["orderNumber"].value = job.orderNumber || "";
-      const aircraft = job.aircraft?.trim().toUpperCase() || "DEFAULT";
-      localStorage.setItem(`job_${aircraft}`, JSON.stringify(job));
-      localStorage.setItem(`products_${aircraft}`, JSON.stringify(importedProducts));
-      localStorage.setItem("mixerJob", JSON.stringify(job));
-      localStorage.setItem("mixerProducts", JSON.stringify(importedProducts));
-      alert("✅ Job imported successfully!");
-      location.href = `job.html?aircraft=${aircraft}`;
-    } catch (err) {
-      alert("❌ Failed to import job: " + err);
-    }
-  };
-  reader.readAsText(file);
 });
