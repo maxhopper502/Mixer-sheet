@@ -245,6 +245,35 @@ hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 .switch-pill:hover:not(.active) { border-color: var(--blue); color: var(--blue); }
 .switch-pill-sub { display: block; font-size: 0.68rem; font-weight: 400; opacity: 0.8; margin-top: 1px; }
 
+/* ── Load block header (title + edit button) ── */
+.load-block-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 8px; margin-bottom: 12px; flex-wrap: wrap;
+}
+.load-title-text {
+  font-size: 0.95rem; font-weight: 700; color: var(--blue);
+  flex: 1; min-width: 0;
+}
+.load-edit-btn {
+  flex-shrink: 0; font-size: 0.75rem; padding: 3px 10px;
+}
+.btn-xs { padding: 2px 8px; font-size: 0.75rem; border-radius: 6px; }
+
+/* ── Per-load edit form ── */
+.load-edit-form { margin-top: 8px; }
+.load-edit-row {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+}
+.load-edit-input {
+  flex: 1; min-width: 90px; padding: 6px 8px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); font-size: 0.85rem;
+}
+.load-edit-input:focus { outline: none; border-color: var(--blue); }
+
+/* ── Stock summary (now inline below load blocks) ── */
+.stock-card { margin-top: 0; border-color: var(--purple); }
+
 /* ── Complete banner ── */
 .complete-banner {
   background: linear-gradient(135deg, rgba(0,184,148,0.2), rgba(9,132,227,0.2));

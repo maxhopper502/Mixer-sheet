@@ -1,8 +1,7 @@
-// ── job.js v3.1 ───────────────────────────────────────────────────────────────
+// ── job.js v3.2 ───────────────────────────────────────────────────────────────
 
 window.onload = function () {
   const params = new URLSearchParams(window.location.search);
-  // Support both new ?jobId= and old ?aircraft= URLs for backward compat
   const jobId  = params.get('jobId') || params.get('aircraft');
 
   if (!jobId) {
@@ -14,8 +13,6 @@ window.onload = function () {
   // ── Load job data ──────────────────────────────────────────────────────────
   let job      = JSON.parse(localStorage.getItem(`job_${jobId}`));
   let products = JSON.parse(localStorage.getItem(`products_${jobId}`));
-
-  // Backward compat: old apps stored under 'mixerJob'/'mixerProducts'
   if (!job)      job      = JSON.parse(localStorage.getItem('mixerJob'));
   if (!products) products = JSON.parse(localStorage.getItem('mixerProducts'));
 
@@ -24,13 +21,13 @@ window.onload = function () {
     window.location.href = 'index.html';
     return;
   }
-
   job.jobId = jobId;
 
   // ── Restore saved progress ────────────────────────────────────────────────
   const savedProgress = JSON.parse(localStorage.getItem(`progress_${jobId}`)) || {};
-  let currentLoad     = savedProgress.currentLoad || 0;
-  job.loadTimes       = savedProgress.loadTimes   || [];
+  let currentLoad     = savedProgress.currentLoad  || 0;
+  let loadOverrides   = savedProgress.loadOverrides || [];  // [{pilot, aircraft}] per load
+  job.loadTimes       = savedProgress.loadTimes    || [];
 
   // ── Derived metrics ───────────────────────────────────────────────────────
   job.totalVolume = job.hectares * job.volPerHa;
@@ -53,12 +50,18 @@ window.onload = function () {
   // ── Switch bar ────────────────────────────────────────────────────────────
   buildSwitchBar(jobId);
 
-  // ── Container state: restore or initialise ────────────────────────────────
+  // ── Container state ───────────────────────────────────────────────────────
   window.containerState = savedProgress.containerState
     ? savedProgress.containerState
     : products.map(p => [...p.containers].sort((a, b) => a - b));
 
   const productsDiv = document.getElementById('products');
+
+  // ── Stock summary element — created once, moved after each load block ─────
+  const stockEl = document.createElement('div');
+  stockEl.className = 'card stock-card';
+  stockEl.innerHTML = `<div class="card-title">📦 Product Remaining</div>
+    <div id="stock-summary"></div>`;
 
   // ── Progress bar ──────────────────────────────────────────────────────────
   function updateProgressBar() {
@@ -69,17 +72,18 @@ window.onload = function () {
   }
   updateProgressBar();
 
-  // ── Save progress to localStorage ─────────────────────────────────────────
+  // ── Save progress ─────────────────────────────────────────────────────────
   function saveProgress() {
     localStorage.setItem(`progress_${jobId}`, JSON.stringify({
       currentLoad,
       containerState: window.containerState,
-      loadTimes:      job.loadTimes
+      loadTimes:      job.loadTimes,
+      loadOverrides
     }));
     updateProgressBar();
   }
 
-  // ── Stock summary ─────────────────────────────────────────────────────────
+  // ── Stock summary renderer ────────────────────────────────────────────────
   function updateStockSummary() {
     document.getElementById('stock-summary').innerHTML = products.map((p, i) => {
       const total = window.containerState[i].reduce((a, b) => a + b, 0).toFixed(2);
@@ -90,7 +94,6 @@ window.onload = function () {
       </div>`;
     }).join('');
   }
-  updateStockSummary();
 
   // ── Container deduction / add-back ────────────────────────────────────────
   function deductFromContainers(productIndex, amountNeeded) {
@@ -108,12 +111,11 @@ window.onload = function () {
   }
 
   function addBackToContainers(productIndex, amountNeeded) {
-    let remaining = amountNeeded;
+    let remaining    = amountNeeded;
     const origSorted = [...products[productIndex].containers].sort((a, b) => a - b);
     for (let i = 0; i < window.containerState[productIndex].length && remaining > 0; i++) {
-      const original = origSorted[i] || 0;
-      const space    = original - window.containerState[productIndex][i];
-      const addBack  = Math.min(space, remaining);
+      const space   = (origSorted[i] || 0) - window.containerState[productIndex][i];
+      const addBack = Math.min(space, remaining);
       window.containerState[productIndex][i] += addBack;
       remaining -= addBack;
     }
@@ -140,6 +142,53 @@ window.onload = function () {
     return usage;
   }
 
+  // ── Per-load edit: pilot / aircraft ──────────────────────────────────────
+  // Exposed globally so onclick attributes in innerHTML can call them
+  window._toggleLoadEdit = function(loadIndex) {
+    const header = document.getElementById(`load-header-${loadIndex}`);
+    if (!header) return;
+    const existing = header.querySelector('.load-edit-form');
+    if (existing) { existing.remove(); return; }
+
+    const ov       = loadOverrides[loadIndex] || {};
+    const pilot    = ov.pilot    !== undefined ? ov.pilot    : (job.pilot    || '');
+    const aircraft = ov.aircraft !== undefined ? ov.aircraft : (job.aircraft || '');
+
+    const form = document.createElement('div');
+    form.className = 'load-edit-form';
+    form.innerHTML = `
+      <div class="load-edit-row">
+        <input type="text" id="ep-${loadIndex}" value="${pilot}"    placeholder="Pilot"    class="load-edit-input"/>
+        <input type="text" id="ea-${loadIndex}" value="${aircraft}" placeholder="Aircraft" class="load-edit-input"/>
+        <button class="btn btn-green btn-sm" onclick="window._saveLoadEdit(${loadIndex})">✓ Save</button>
+        <button class="btn btn-ghost btn-sm" onclick="window._toggleLoadEdit(${loadIndex})">Cancel</button>
+      </div>`;
+    header.appendChild(form);
+    document.getElementById(`ep-${loadIndex}`).focus();
+  };
+
+  window._saveLoadEdit = function(loadIndex) {
+    const pilotEl    = document.getElementById(`ep-${loadIndex}`);
+    const aircraftEl = document.getElementById(`ea-${loadIndex}`);
+    if (!pilotEl || !aircraftEl) return;
+
+    const pilot    = pilotEl.value.trim();
+    const aircraft = aircraftEl.value.trim();
+    loadOverrides[loadIndex] = { pilot, aircraft };
+    saveProgress();
+
+    // Update title text in the header
+    const header = document.getElementById(`load-header-${loadIndex}`);
+    if (header) {
+      const span = header.querySelector('.load-title-text');
+      if (span) {
+        span.textContent = `Load ${loadIndex + 1} of ${job.loads} — ${pilot || job.pilot || '—'} / ${aircraft || job.aircraft || '—'}`;
+      }
+      const form = header.querySelector('.load-edit-form');
+      if (form) form.remove();
+    }
+  };
+
   // ── Render one load block ─────────────────────────────────────────────────
   function renderLoadBlock() {
     if (currentLoad >= job.loads) {
@@ -153,15 +202,28 @@ window.onload = function () {
       return;
     }
 
+    const thisLoad = currentLoad;   // capture — will change when "Load Plane" is clicked
+    const ov       = loadOverrides[thisLoad] || {};
+    const loadPilot    = ov.pilot    !== undefined ? ov.pilot    : (job.pilot    || '—');
+    const loadAircraft = ov.aircraft !== undefined ? ov.aircraft : (job.aircraft || '—');
+
+    // ── Load block card ───────────────────────────────────────────────────
     const loadDiv      = document.createElement('div');
     loadDiv.className  = 'card load-block';
-    loadDiv.id         = `load-block-${currentLoad}`;
+    loadDiv.id         = `load-block-${thisLoad}`;
 
-    const titleDiv     = document.createElement('div');
-    titleDiv.className = 'load-block-title';
-    titleDiv.textContent = `Load ${currentLoad + 1} of ${job.loads} — ${job.pilot || 'Pilot'} / ${job.aircraft}`;
-    loadDiv.appendChild(titleDiv);
+    // Header row: title text + edit button
+    const header       = document.createElement('div');
+    header.className   = 'load-block-header';
+    header.id          = `load-header-${thisLoad}`;
+    header.innerHTML   = `
+      <span class="load-title-text">Load ${thisLoad + 1} of ${job.loads} — ${loadPilot} / ${loadAircraft}</span>
+      <button class="btn btn-ghost btn-xs load-edit-btn"
+              onclick="window._toggleLoadEdit(${thisLoad})"
+              title="Edit pilot / aircraft for this load">✏️ Edit</button>`;
+    loadDiv.appendChild(header);
 
+    // ── Product rows ──────────────────────────────────────────────────────
     const allAdded = new Array(products.length).fill(false);
     const deducted = new Array(products.length).fill(false);
 
@@ -202,7 +264,7 @@ window.onload = function () {
           loadedBtn.textContent = '✈️ Load Plane';
           loadedBtn.className   = 'btn btn-green load-confirm btn-block';
           loadedBtn.style.marginTop = '12px';
-          loadedBtn.onclick     = () => {
+          loadedBtn.onclick = () => {
             loadedBtn.disabled      = true;
             loadedBtn.textContent   = '✅ Plane Loaded';
             loadedBtn.style.opacity = '0.7';
@@ -223,6 +285,11 @@ window.onload = function () {
     });
 
     productsDiv.appendChild(loadDiv);
+
+    // ── Stock summary: always placed immediately after the latest load block
+    productsDiv.appendChild(stockEl);
+    updateStockSummary();
+
     loadDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
@@ -234,7 +301,7 @@ window.onload = function () {
   };
 
   window.deleteJob = () => {
-    if (!confirm(`Delete job for ${job.aircraft} (${job.client})? This cannot be undone.`)) return;
+    if (!confirm(`Delete job for ${job.aircraft} (${job.client})?`)) return;
     localStorage.removeItem(`job_${jobId}`);
     localStorage.removeItem(`products_${jobId}`);
     localStorage.removeItem(`progress_${jobId}`);
@@ -244,17 +311,8 @@ window.onload = function () {
   window.exportJob = async () => {
     const mixer = prompt('Enter mixer name:');
     if (mixer === null) return;
+    if (!window.jspdf) { alert('PDF library not loaded. Try refreshing.'); return; }
 
-    const productRemaining = products.map((p, i) => ({
-      name:      p.name,
-      remaining: window.containerState[i].reduce((a, b) => a + b, 0).toFixed(2),
-      unit:      p.unit
-    }));
-
-    if (!window.jspdf) {
-      alert('PDF library not loaded. Try refreshing the page.');
-      return;
-    }
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     let y = 14;
@@ -275,56 +333,58 @@ window.onload = function () {
 
     y += 4;
     doc.text('Product Remaining:', m, y); y += 6;
-    productRemaining.forEach(p => { doc.text(`  ${p.name}: ${p.remaining} ${p.unit}`, m, y); y += 6; });
+    products.forEach((p, i) => {
+      const rem = window.containerState[i].reduce((a, b) => a + b, 0).toFixed(2);
+      doc.text(`  ${p.name}: ${rem} ${p.unit}`, m, y); y += 6;
+    });
 
     if (job.loadTimes?.length) {
       y += 4;
       doc.text('Load Times:', m, y); y += 6;
-      job.loadTimes.forEach((t, i) => { doc.text(`  Load ${i + 1}: ${t}`, m, y); y += 6; });
+      job.loadTimes.forEach((t, i) => {
+        const ov = loadOverrides[i] || {};
+        const lp = ov.pilot    || job.pilot    || '—';
+        const la = ov.aircraft || job.aircraft || '—';
+        doc.text(`  Load ${i + 1}: ${t}  (${lp} / ${la})`, m, y); y += 6;
+      });
     }
 
     const filename = `${job.client}_${job.orderNumber || 'job'}_${job.aircraft}_mixer.pdf`
       .replace(/[^a-z0-9_\-\.]/gi, '_');
     doc.save(filename);
 
-    // Archive
     const history = JSON.parse(localStorage.getItem('completedJobs') || '[]');
-    history.push({
-      client:      job.client,
-      aircraft:    job.aircraft,
-      orderNumber: job.orderNumber,
-      exportDate:  new Date().toLocaleString(),
-      mixer:       mixer || '—'
-    });
+    history.push({ client: job.client, aircraft: job.aircraft, orderNumber: job.orderNumber,
+                   exportDate: new Date().toLocaleString(), mixer: mixer || '—' });
     localStorage.setItem('completedJobs', JSON.stringify(history));
     alert('✅ PDF exported!');
   };
 };
 
-// ── Switch bar (shows other active jobs) ──────────────────────────────────────
+// ── Switch bar ────────────────────────────────────────────────────────────────
 function buildSwitchBar(currentJobId) {
   const allJobs = [];
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (!key || !key.startsWith('job_')) continue;
     try {
-      const j    = JSON.parse(localStorage.getItem(key));
+      const j   = JSON.parse(localStorage.getItem(key));
       if (!j || !j.client) continue;
-      const jId  = j.jobId || key.slice(4);
+      const jId = j.jobId || key.slice(4);
       const prog = JSON.parse(localStorage.getItem(`progress_${jId}`)) || {};
       const done = (prog.currentLoad || 0) >= (j.loads || 1);
       allJobs.push({ jId, aircraft: j.aircraft, client: j.client, done });
     } catch(e) {}
   }
   if (allJobs.length <= 1) return;
-
   const bar  = document.getElementById('switch-bar');
   const wrap = document.getElementById('switch-pills');
   bar.style.display = '';
   wrap.innerHTML = allJobs.map(j =>
     `<a href="job.html?jobId=${encodeURIComponent(j.jId)}"
         class="switch-pill${j.jId === currentJobId ? ' active' : ''}">
-       ${j.done ? '✅' : '✈️'} ${j.aircraft}<span class="switch-pill-sub">${j.client}</span>
+       ${j.done ? '✅' : '✈️'} ${j.aircraft}
+       <span class="switch-pill-sub">${j.client}</span>
      </a>`
   ).join('');
 }
